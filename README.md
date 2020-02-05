@@ -1,3 +1,21 @@
+I modified Katago to support different board games.
+
+Now there are Capture Go, Gomoku/Renju, Reversi.
+
+Reversi has been opensourced in Reversi branch.(But no GUI support it, you can use it in cmd, or YZY's lizzie(support gomoku, not reversi,so you should image which stones are black/white in your brain)). A neutral net is published in release page.
+
+Gomoku/Renju will be published after Gomocup 2020(No matter I take part in it or not).
+
+I'll rewrite Capture Go with new code when I have time.Old version has some bugs.
+
+
+
+
+
+
+
+
+
 # KataGo
 
 KataGo is an implementation of AlphaZero-like training in Go with a lot of modifications and enhancements that greatly improve upon basic self-play learning. Many of these take advantage of game-specific features and training targets, but also a surprising number of them are non-specific and could easily be tried in other games. Due to these enhancements, early training is immensely faster than in other zero-style bots - with only a few strong GPUs for a few days, even a single person should be able to train a neural net from nothing to high amateur dan strength on the full 19x19 board. KataGo's latest run used about 29 GPUs, rather than thousands (like AlphaZero and ELF) first reached superhuman levels on that hardware in perhaps just three to six days, and reached strength similar to ELF in about 14 days. With minor adjustments and another 8 GPUs, it has also now surpassed Leela Zero at 30-40 days, hopefully making KataGo one of the top open source Go engines available.
