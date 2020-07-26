@@ -1,3 +1,8 @@
+
+***Updated On 2020.7.26***
+See release page
+
+
 I modified Katago to support different board games.
 
 Now there are Capture Go, Gomoku/Renju, Reversi.
