@@ -1,6 +1,6 @@
 Sorry I will ***NOT*** opensource it, at least in one year. And It's ***quite easy*** to rewrite it if you want.
 
-Latest release: 2020.7.26  See release page
+Latest release: 2020.7.26 (freestyle,standard,renju,and several engines for special use), See release page
 
 Now there are gomoku(freestyle,standard,renju,caro), reversi, connect6, breakthrough, hex, "four in a row", Chinese checkers, and many board games few people play.
 
