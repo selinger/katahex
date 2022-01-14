@@ -124,13 +124,11 @@ void BookHash::getHashAndSymmetry(const BoardHistory& hist, int repBound, BookHa
 
   for(int symmetry = 0; symmetry < numSymmetries; symmetry++) {
     boardsBySym[symmetry] = SymmetryHelpers::getSymBoard(hist.initialBoard,symmetry);
-    histsBySym[symmetry] = BoardHistory(boardsBySym[symmetry], hist.initialPla, hist.rules, hist.initialEncorePhase);
+    histsBySym[symmetry] = BoardHistory(boardsBySym[symmetry], hist.initialPla, hist.rules);
     accums[symmetry] = Hash128();
   }
 
   //TODO
-  //This may be buggy with encore phase because the hash doesn't include encore phase or ko marks in the history.
-  //It's kind of tricky to trigger though since it depends on finding a situation in the encore where the current
   //ko marks aren't sufficient, where the history matters.
   for(size_t i = 0; i<hist.moveHistory.size(); i++) {
     for(int symmetry = 0; symmetry < numSymmetries; symmetry++) {
@@ -718,8 +716,7 @@ Book::Book(
   int symmetryToAlign;
   vector<int> rootSymmetries;
 
-  int initialEncorePhase = 0;
-  BoardHistory initialHist(initialBoard, initialPla, initialRules, initialEncorePhase);
+  BoardHistory initialHist(initialBoard, initialPla, initialRules);
   BookHash::getHashAndSymmetry(initialHist, repBound, rootHash, symmetryToAlign, rootSymmetries);
 
   initialSymmetry = symmetryToAlign;
@@ -738,8 +735,7 @@ BoardHistory Book::getInitialHist() const {
   return getInitialHist(0);
 }
 BoardHistory Book::getInitialHist(int symmetry) const {
-  int initialEncorePhase = 0;
-  return BoardHistory(SymmetryHelpers::getSymBoard(initialBoard,symmetry), initialPla, initialRules, initialEncorePhase);
+  return BoardHistory(SymmetryHelpers::getSymBoard(initialBoard,symmetry), initialPla, initialRules);
 }
 
 size_t Book::size() const {
@@ -1716,9 +1712,6 @@ void Book::exportToHtmlDir(
       return;
     }
 
-    // Omit exporting nodes that are past the normal game end.
-    if(hist.encorePhase > 0)
-      return;
 
     Board board = hist.getRecentBoard(0);
 
@@ -1767,7 +1760,7 @@ void Book::exportToHtmlDir(
     {
       Loc loc = Board::PASS_LOC;
       // Avoid linking children that would end the phase
-      if(!hist.passWouldEndPhase(board,node->pla)) {
+      if(!hist.passWouldEndGame(board,node->pla)) {
         SymBookNode child = symNode.follow(loc);
         // Entirely omit linking children that are simply leaves, to save on the number of files we have to produce and serve.
         // if(!child.isNull() && child.node->moves.size() > 0) {

@@ -78,8 +78,6 @@ struct SearchParams {
   double rootEndingBonusPoints; //Extra bonus (or penalty) to encourage good passing behavior at the end of the game.
   bool rootPruneUselessMoves; //Prune moves that are entirely useless moves that prolong the game.
   bool conservativePass; //Never assume one's own pass will end the game.
-  bool fillDameBeforePass; //When territory scoring, heuristically discourage passing before filling the dame.
-  Player avoidMYTDaggerHackPla; //Hacky hack to avoid a particular pattern that gives some KG nets some trouble. Should become unnecessary in the future.
   double wideRootNoise; //Explore at the root more widely
 
   double playoutDoublingAdvantage; //Play as if we have this many doublings of playouts vs the opponent

@@ -58,8 +58,6 @@ SearchParams::SearchParams()
    rootEndingBonusPoints(0.0),
    rootPruneUselessMoves(false),
    conservativePass(false),
-   fillDameBeforePass(false),
-   avoidMYTDaggerHackPla(C_EMPTY),
    wideRootNoise(0.0),
    playoutDoublingAdvantage(0.0),
    playoutDoublingAdvantagePla(C_EMPTY),

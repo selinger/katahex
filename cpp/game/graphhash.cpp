@@ -5,9 +5,9 @@ Hash128 GraphHash::getStateHash(const BoardHistory& hist, Player nextPlayer, dou
   Hash128 hash = BoardHistory::getSituationRulesAndKoHash(board, hist, nextPlayer, drawEquivalentWinsForWhite);
 
   // Fold in whether a pass ends this phase
-  bool passEndsPhase = hist.passWouldEndPhase(board,nextPlayer);
-  if(passEndsPhase)
-    hash ^= Board::ZOBRIST_PASS_ENDS_PHASE;
+  bool passEndsGame = hist.passWouldEndGame(board,nextPlayer);
+  if(passEndsGame)
+    hash ^= Board::ZOBRIST_PASS_ENDS_GAME;
   // Fold in whether the game is over or not
   if(hist.isGameFinished)
     hash ^= Board::ZOBRIST_GAME_IS_OVER;
@@ -44,7 +44,7 @@ Hash128 GraphHash::getGraphHashFromScratch(const BoardHistory& histOrig, Player 
 
   for(size_t i = 0; i<histOrig.moveHistory.size(); i++) {
     graphHash = getGraphHash(graphHash, hist, histOrig.moveHistory[i].pla, repBound, drawEquivalentWinsForWhite);
-    bool suc = hist.makeBoardMoveTolerant(board, histOrig.moveHistory[i].loc, histOrig.moveHistory[i].pla, histOrig.preventEncoreHistory[i]);
+    bool suc = hist.makeBoardMoveTolerant(board, histOrig.moveHistory[i].loc, histOrig.moveHistory[i].pla);
     assert(suc);
   }
   assert(

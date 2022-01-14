@@ -8,23 +8,8 @@
 //This is a grab-bag of various useful higher-level functions that select moves or evaluate the board in various ways.
 
 namespace PlayUtils {
-  //Use the given bot to play free handicap stones, modifying the board and hist in the process and setting the bot's position to it.
-  //Does NOT switch the initial player of the board history to white
-  void playExtraBlack(
-    Search* bot,
-    int numExtraBlack,
-    Board& board,
-    BoardHistory& hist,
-    double temperature,
-    Rand& gameRand
-  );
-
-  //Set board to empty and place fixed handicap stones, raising an exception if invalid
-  void placeFixedHandicap(Board& board, int n);
-
   ExtraBlackAndKomi chooseExtraBlackAndKomi(
-    float base, float stdev, double allowIntegerProb,
-    double handicapProb, int numExtraBlackFixed,
+    float base, float stdev, double allowIntegerProb, 
     double bigStdevProb, float bigStdev, double sqrtBoardArea, Rand& rand
   );
   void setKomiWithoutNoise(const ExtraBlackAndKomi& extraBlackAndKomi, BoardHistory& hist); //Also ignores allowInteger

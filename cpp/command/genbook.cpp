@@ -155,7 +155,7 @@ int MainCmds::genbook(const vector<string>& args) {
       uniqueHashes, hashComments, hashParent, flipIfPassOrWFirst, &seedRand, [&](Sgf::PositionSample& unusedSample, const BoardHistory& sgfHist, const string& comments) {
         (void)unusedSample;
         if(comments.size() > 0 && comments.find("BONUS") != string::npos) {
-          BoardHistory hist(sgfHist.initialBoard, sgfHist.initialPla, rules, sgfHist.initialEncorePhase);
+          BoardHistory hist(sgfHist.initialBoard, sgfHist.initialPla, rules);
           Board board = hist.initialBoard;
           for(size_t i = 0; i<sgfHist.moveHistory.size(); i++) {
             bool suc = hist.makeBoardMoveTolerant(board, sgfHist.moveHistory[i].loc, sgfHist.moveHistory[i].pla);
@@ -551,8 +551,7 @@ int MainCmds::genbook(const vector<string>& args) {
     if(
       targetHist.initialBoard.pos_hash != board.pos_hash ||
       targetHist.initialBoard.ko_loc != board.ko_loc ||
-      targetHist.initialPla != pla ||
-      targetHist.initialEncorePhase != hist.initialEncorePhase
+      targetHist.initialPla != pla 
     ) {
       throw StringError("Target board history to add to book doesn't start from the same position");
     }
@@ -560,7 +559,7 @@ int MainCmds::genbook(const vector<string>& args) {
 
     for(auto& move: targetHist.moveHistory) {
       // Make sure we don't walk off the edge under this ruleset.
-      if(hist.isGameFinished || hist.isPastNormalPhaseEnd) {
+      if(hist.isGameFinished) {
         logger.write("Skipping trace variation at this book hash " + node.hash().toString() + " since game over");
         node.canExpand() = false;
         break;
@@ -688,7 +687,7 @@ int MainCmds::genbook(const vector<string>& args) {
     }
 
     // Terminal node!
-    if(hist.isGameFinished || hist.isPastNormalPhaseEnd) {
+    if(hist.isGameFinished) {
       std::lock_guard<std::mutex> lock(bookMutex);
       node.canExpand() = false;
       return;

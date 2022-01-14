@@ -87,38 +87,6 @@ static int handleSubcommand(const string& subcommand, const vector<string>& args
     return MainCmds::matchauto(subArgs);
   else if(subcommand == "selfplay")
     return MainCmds::selfplay(subArgs);
-  else if(subcommand == "runtests")
-    return MainCmds::runtests(subArgs);
-  else if(subcommand == "runnnlayertests")
-    return MainCmds::runnnlayertests(subArgs);
-  else if(subcommand == "runnnontinyboardtest")
-    return MainCmds::runnnontinyboardtest(subArgs);
-  else if(subcommand == "runnnsymmetriestest")
-    return MainCmds::runnnsymmetriestest(subArgs);
-  else if(subcommand == "runownershiptests")
-    return MainCmds::runownershiptests(subArgs);
-  else if(subcommand == "runoutputtests")
-    return MainCmds::runoutputtests(subArgs);
-  else if(subcommand == "runsearchtests")
-    return MainCmds::runsearchtests(subArgs);
-  else if(subcommand == "runsearchtestsv3")
-    return MainCmds::runsearchtestsv3(subArgs);
-  else if(subcommand == "runsearchtestsv8")
-    return MainCmds::runsearchtestsv8(subArgs);
-  else if(subcommand == "runselfplayinittests")
-    return MainCmds::runselfplayinittests(subArgs);
-  else if(subcommand == "runselfplayinitstattests")
-    return MainCmds::runselfplayinitstattests(subArgs);
-  else if(subcommand == "runsekitrainwritetests")
-    return MainCmds::runsekitrainwritetests(subArgs);
-  else if(subcommand == "runnnonmanyposestest")
-    return MainCmds::runnnonmanyposestest(subArgs);
-  else if(subcommand == "runnnbatchingtest")
-    return MainCmds::runnnbatchingtest(subArgs);
-  else if(subcommand == "runtinynntests")
-    return MainCmds::runtinynntests(subArgs);
-  else if(subcommand == "runnnevalcanarytests")
-    return MainCmds::runnnevalcanarytests(subArgs);
   else if(subcommand == "samplesgfs")
     return MainCmds::samplesgfs(subArgs);
   else if(subcommand == "dataminesgfs")
@@ -133,10 +101,6 @@ static int handleSubcommand(const string& subcommand, const vector<string>& args
     return MainCmds::demoplay(subArgs);
   else if(subcommand == "sampleinitializations")
     return MainCmds::sampleinitializations(subArgs);
-  else if(subcommand == "runbeginsearchspeedtest")
-    return MainCmds::runbeginsearchspeedtest(subArgs);
-  else if(subcommand == "runsleeptest")
-    return MainCmds::runsleeptest(subArgs);
   else if(subcommand == "printclockinfo")
     return MainCmds::printclockinfo(subArgs);
   else if(subcommand == "sandbox")

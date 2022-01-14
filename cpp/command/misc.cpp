@@ -121,7 +121,7 @@ static void initializeDemoGame(Board& board, BoardHistory& hist, Player& pla, Ra
 
   board = Board(size,size);
   pla = P_BLACK;
-  hist.clear(board,pla,Rules::getTrompTaylorish(),0);
+  hist.clear(board,pla,Rules::getTrompTaylorish());
   bot->setPosition(pla,board,hist);
 
   if(size == 19) {
@@ -332,7 +332,7 @@ static void initializeDemoGame(Board& board, BoardHistory& hist, Player& pla, Ra
         hist.makeBoardMoveAssumeLegal(board,nextMove.loc,nextMove.pla,NULL);
         pla = getOpp(pla);
 
-        hist.clear(board,pla,hist.rules,0);
+        hist.clear(board,pla,hist.rules);
         bot->setPosition(pla,board,hist);
 
         movesPlayed.push_back(nextMove);
@@ -439,7 +439,7 @@ int MainCmds::demoplay(const vector<string>& args) {
 
     Player pla = P_BLACK;
     Board baseBoard;
-    BoardHistory baseHist(baseBoard,pla,Rules::getTrompTaylorish(),0);
+    BoardHistory baseHist(baseBoard,pla,Rules::getTrompTaylorish());
     TimeControls tc;
 
     initializeDemoGame(baseBoard, baseHist, pla, gameRand, bot);
@@ -590,7 +590,6 @@ int MainCmds::samplesgfs(const vector<string>& args) {
 
   int minMinRank;
   string requiredPlayerName;
-  int maxHandicap;
   double maxKomi;
 
   try {
@@ -607,7 +606,6 @@ int MainCmds::samplesgfs(const vector<string>& args) {
     TCLAP::SwitchArg flipIfPassOrWFirstArg("","flip-if-pass","Try to heuristically find cases where an sgf passes to simulate white<->black");
     TCLAP::ValueArg<int> minMinRankArg("","min-min-rank","Require both players in a game to have rank at least this",false,Sgf::RANK_UNKNOWN,"INT");
     TCLAP::ValueArg<string> requiredPlayerNameArg("","required-player-name","Require player making the move to have this name",false,string(),"NAME");
-    TCLAP::ValueArg<int> maxHandicapArg("","max-handicap","Require no more than this big handicap in stones",false,100,"INT");
     TCLAP::ValueArg<double> maxKomiArg("","max-komi","Require absolute value of game komi to be at most this",false,1000,"KOMI");
     cmd.add(sgfDirArg);
     cmd.add(outDirArg);
@@ -620,7 +618,6 @@ int MainCmds::samplesgfs(const vector<string>& args) {
     cmd.add(flipIfPassOrWFirstArg);
     cmd.add(minMinRankArg);
     cmd.add(requiredPlayerNameArg);
-    cmd.add(maxHandicapArg);
     cmd.add(maxKomiArg);
     cmd.parseArgs(args);
     sgfDirs = sgfDirArg.getValue();
@@ -634,7 +631,6 @@ int MainCmds::samplesgfs(const vector<string>& args) {
     flipIfPassOrWFirst = flipIfPassOrWFirstArg.getValue();
     minMinRank = minMinRankArg.getValue();
     requiredPlayerName = requiredPlayerNameArg.getValue();
-    maxHandicap = maxHandicapArg.getValue();
     maxKomi = maxKomiArg.getValue();
   }
   catch (TCLAP::ArgException &e) {
@@ -668,8 +664,6 @@ int MainCmds::samplesgfs(const vector<string>& args) {
   };
 
   auto isSgfOkay = [&](const Sgf* sgf) {
-    if(maxHandicap < 100 && sgf->getHandicapValue() > maxHandicap)
-      return false;
     if(sgf->depth() > maxDepth)
       return false;
     if(std::fabs(sgf->getKomi()) > maxKomi)
@@ -898,7 +892,6 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
   int minRank;
   int minMinRank;
   string requiredPlayerName;
-  int maxHandicap;
   double maxKomi;
   double maxAutoKomi;
   double maxPolicy;
@@ -927,7 +920,6 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
     TCLAP::ValueArg<int> minRankArg("","min-rank","Require player making the move to have rank at least this",false,Sgf::RANK_UNKNOWN,"INT");
     TCLAP::ValueArg<int> minMinRankArg("","min-min-rank","Require both players in a game to have rank at least this",false,Sgf::RANK_UNKNOWN,"INT");
     TCLAP::ValueArg<string> requiredPlayerNameArg("","required-player-name","Require player making the move to have this name",false,string(),"NAME");
-    TCLAP::ValueArg<int> maxHandicapArg("","max-handicap","Require no more than this big handicap in stones",false,100,"INT");
     TCLAP::ValueArg<double> maxKomiArg("","max-komi","Require absolute value of game komi to be at most this",false,1000,"KOMI");
     TCLAP::ValueArg<double> maxAutoKomiArg("","max-auto-komi","If absolute value of auto komi would exceed this, skip position",false,1000,"KOMI");
     TCLAP::ValueArg<double> maxPolicyArg("","max-policy","Chop off moves with raw policy more than this",false,1,"POLICY");
@@ -949,7 +941,6 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
     cmd.add(minRankArg);
     cmd.add(minMinRankArg);
     cmd.add(requiredPlayerNameArg);
-    cmd.add(maxHandicapArg);
     cmd.add(maxKomiArg);
     cmd.add(maxAutoKomiArg);
     cmd.add(maxPolicyArg);
@@ -974,7 +965,6 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
     minRank = minRankArg.getValue();
     minMinRank = minMinRankArg.getValue();
     requiredPlayerName = requiredPlayerNameArg.getValue();
-    maxHandicap = maxHandicapArg.getValue();
     maxKomi = maxKomiArg.getValue();
     maxAutoKomi = maxAutoKomiArg.getValue();
     maxPolicy = maxPolicyArg.getValue();
@@ -1108,8 +1098,6 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
   };
 
   auto isSgfOkay = [&](const Sgf* sgf) {
-    if(maxHandicap < 100 && sgf->getHandicapValue() > maxHandicap)
-      return false;
     if(sgf->depth() > maxDepth)
       return false;
     if(std::fabs(sgf->getKomi()) > maxKomi)
@@ -1123,7 +1111,7 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
     return true;
   };
 
-  auto expensiveEvaluateMove = [&toWriteQueue,&turnWeightLambda,&maxAutoKomi,&maxHandicap,&numFilteredIndivdualPoses](
+  auto expensiveEvaluateMove = [&toWriteQueue,&turnWeightLambda,&maxAutoKomi,&numFilteredIndivdualPoses](
     Search* search, Loc missedLoc,
     Player nextPla, const Board& board, const BoardHistory& hist,
     const Sgf::PositionSample& sample, bool markedAsHintPos
@@ -1132,10 +1120,6 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
       return;
 
     if(std::fabs(hist.rules.komi) > maxAutoKomi) {
-      numFilteredIndivdualPoses.fetch_add(1);
-      return;
-    }
-    if(hist.computeNumHandicapStones() > maxHandicap) {
       numFilteredIndivdualPoses.fetch_add(1);
       return;
     }
@@ -1251,7 +1235,7 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
   // ---------------------------------------------------------------------------------------------------
   //SGF MODE
 
-  auto processSgfGame = [&logger,&gameInit,&nnEval,&expensiveEvaluateMove,autoKomi,&gameModeFastThreshold,&maxDepth,&numFilteredSgfs,&maxHandicap,&maxPolicy](
+  auto processSgfGame = [&logger,&gameInit,&nnEval,&expensiveEvaluateMove,autoKomi,&gameModeFastThreshold,&maxDepth,&numFilteredSgfs,&maxPolicy](
     Search* search, Rand& rand, const string& fileName, CompactSgf* sgf, bool blackOkay, bool whiteOkay
   ) {
     //Don't use the SGF rules - randomize them for a bit more entropy
@@ -1270,14 +1254,9 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
       return;
     }
 
-    const bool preventEncore = true;
     const vector<Move>& sgfMoves = sgf->moves;
 
     if(sgfMoves.size() > maxDepth) {
-      numFilteredSgfs.fetch_add(1);
-      return;
-    }
-    if(hist.computeNumHandicapStones() > maxHandicap) {
       numFilteredSgfs.fetch_add(1);
       return;
     }
@@ -1326,7 +1305,7 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
         break;
 
       //Quit out if according to our rules, we already finished the game, or we're somehow in a cleanup phase
-      if(hist.isGameFinished || hist.encorePhase > 0)
+      if(hist.isGameFinished )
         break;
 
       //Quit out if consecutive moves by the same player, to keep the history clean and "normal"
@@ -1338,12 +1317,12 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
       bool suc = hist.isLegal(board,sgfMoves[m].loc,sgfMoves[m].pla);
       if(!suc) {
         //Only log on errors that aren't simply due to ko rules, but quit out regardless
-        suc = hist.makeBoardMoveTolerant(board,sgfMoves[m].loc,sgfMoves[m].pla,preventEncore);
+        suc = hist.makeBoardMoveTolerant(board,sgfMoves[m].loc,sgfMoves[m].pla);
         if(!suc)
           logger.write("Illegal move in " + fileName + " turn " + Global::intToString(m) + " move " + Location::toString(sgfMoves[m].loc, board.x_size, board.y_size));
         break;
       }
-      hist.makeBoardMoveAssumeLegal(board,sgfMoves[m].loc,sgfMoves[m].pla,NULL,preventEncore);
+      hist.makeBoardMoveAssumeLegal(board,sgfMoves[m].loc,sgfMoves[m].pla,NULL);
       nextPla = getOpp(sgfMoves[m].pla);
     }
     boards.push_back(board);
@@ -1522,9 +1501,8 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
     Rules rules = gameInit->createRules();
 
     //Now play the rest of the moves out, except the last, which we keep as the potential hintloc
-    int encorePhase = 0;
     Player pla = sample.nextPla;
-    BoardHistory hist(board,pla,rules,encorePhase);
+    BoardHistory hist(board,pla,rules);
     int numSampleMoves = (int)sample.moves.size();
     for(int i = 0; i<numSampleMoves; i++) {
       if(!hist.isLegal(board,sample.moves[i].loc,sample.moves[i].pla))
@@ -1876,11 +1854,11 @@ int MainCmds::trystartposes(const vector<string>& args) {
     Board board = startPos.board;
     Player pla = startPos.nextPla;
     BoardHistory hist;
-    hist.clear(board,pla,rules,0);
+    hist.clear(board,pla,rules);
     hist.setInitialTurnNumber(startPos.initialTurnNumber);
     bool allLegal = true;
     for(size_t i = 0; i<startPos.moves.size(); i++) {
-      bool isLegal = hist.makeBoardMoveTolerant(board,startPos.moves[i].loc,startPos.moves[i].pla,false);
+      bool isLegal = hist.makeBoardMoveTolerant(board,startPos.moves[i].loc,startPos.moves[i].pla);
       if(!isLegal) {
         allLegal = false;
         break;
@@ -2030,12 +2008,12 @@ int MainCmds::viewstartposes(const vector<string>& args) {
     Board board = startPos.board;
     Player pla = startPos.nextPla;
     BoardHistory hist;
-    hist.clear(board,pla,rules,0);
+    hist.clear(board,pla,rules);
     hist.setInitialTurnNumber(startPos.initialTurnNumber);
 
     bool allLegal = true;
     for(size_t i = 0; i<startPos.moves.size(); i++) {
-      bool isLegal = hist.makeBoardMoveTolerant(board,startPos.moves[i].loc,startPos.moves[i].pla,false);
+      bool isLegal = hist.makeBoardMoveTolerant(board,startPos.moves[i].loc,startPos.moves[i].pla);
       if(!isLegal) {
         allLegal = false;
         break;

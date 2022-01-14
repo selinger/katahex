@@ -129,7 +129,7 @@ Search::Search(SearchParams params, NNEvaluator* nnEval, Logger* lg, const strin
   nodeTable = new SearchNodeTable(params.nodeTableShardsPowerOfTwo);
   mutexPool = new MutexPool(nodeTable->mutexPool->getNumMutexes());
 
-  rootHistory.clear(rootBoard,rootPla,Rules(),0);
+  rootHistory.clear(rootBoard,rootPla,Rules());
   rootKoHashTable->recompute(rootHistory);
 }
 
@@ -183,9 +183,7 @@ void Search::setPlayerAndClearHistory(Player pla) {
   rootBoard.clearSimpleKoLoc();
   Rules rules = rootHistory.rules;
   //Preserve this value even when we get multiple moves in a row by some player
-  bool assumeMultipleStartingBlackMovesAreHandicap = rootHistory.assumeMultipleStartingBlackMovesAreHandicap;
-  rootHistory.clear(rootBoard,rootPla,rules,rootHistory.encorePhase);
-  rootHistory.setAssumeMultipleStartingBlackMovesAreHandicap(assumeMultipleStartingBlackMovesAreHandicap);
+  rootHistory.clear(rootBoard,rootPla,rules);
 
   rootKoHashTable->recompute(rootHistory);
   avoidMoveUntilByLocBlack.clear();
@@ -300,11 +298,8 @@ bool Search::isLegalStrict(Loc moveLoc, Player movePla) const {
   return movePla == rootPla && rootHistory.isLegal(rootBoard,moveLoc,movePla);
 }
 
-bool Search::makeMove(Loc moveLoc, Player movePla) {
-  return makeMove(moveLoc,movePla,false);
-}
 
-bool Search::makeMove(Loc moveLoc, Player movePla, bool preventEncore) {
+bool Search::makeMove(Loc moveLoc, Player movePla) {
   if(!isLegalTolerant(moveLoc,movePla))
     return false;
 
@@ -369,11 +364,8 @@ bool Search::makeMove(Loc moveLoc, Player movePla, bool preventEncore) {
     }
   }
 
-  //If the white handicap bonus changes due to the move, we will also need to recompute everything since this is
-  //basically like a change to the komi.
-  float oldWhiteHandicapBonusScore = rootHistory.whiteHandicapBonusScore;
 
-  rootHistory.makeBoardMoveAssumeLegal(rootBoard,moveLoc,rootPla,rootKoHashTable,preventEncore);
+  rootHistory.makeBoardMoveAssumeLegal(rootBoard,moveLoc,rootPla,rootKoHashTable);
   rootPla = getOpp(rootPla);
   rootKoHashTable->recompute(rootHistory);
 
@@ -381,9 +373,6 @@ bool Search::makeMove(Loc moveLoc, Player movePla, bool preventEncore) {
   avoidMoveUntilByLocBlack.clear();
   avoidMoveUntilByLocWhite.clear();
 
-  //If we're newly inferring some moves as handicap that we weren't before, clear since score will be wrong.
-  if(rootHistory.whiteHandicapBonusScore != oldWhiteHandicapBonusScore)
-    clearSearch();
 
   //In the case that we are conservativePass and a pass would end the game, need to clear the search.
   //This is because deeper in the tree, such a node would have been explored as ending the game, but now that
@@ -393,7 +382,7 @@ bool Search::makeMove(Loc moveLoc, Player movePla, bool preventEncore) {
 
   //In the case that we're preventing encore, and the phase would have ended, we also need to clear the search
   //since the search was conducted on the assumption that we're going into encore now.
-  if(preventEncore && rootHistory.passWouldEndPhase(rootBoard,rootPla))
+  if(rootHistory.passWouldEndGame(rootBoard,rootPla))
     clearSearch();
 
   return true;

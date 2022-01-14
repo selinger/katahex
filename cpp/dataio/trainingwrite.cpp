@@ -65,9 +65,7 @@ FinishedGameData::FinishedGameData()
 
    hitTurnLimit(false),
 
-   numExtraBlack(0),
    mode(0),
-   beganInEncorePhase(0),
    usedInitialPosition(0),
 
    hasFullData(false),
@@ -122,9 +120,7 @@ void FinishedGameData::printDebug(ostream& out) const {
   endHist.printDebugInfo(out,endHist.getRecentBoard(0));
   out << "gameHash " << gameHash << endl;
   out << "hitTurnLimit " << hitTurnLimit << endl;
-  out << "numExtraBlack " << numExtraBlack << endl;
   out << "mode " << mode << endl;
-  out << "beganInEncorePhase " << beganInEncorePhase << endl;
   out << "usedInitialPosition " << usedInitialPosition << endl;
   out << "hasFullData " << hasFullData << endl;
   for(int i = 0; i<targetWeightByTurn.size(); i++)
@@ -373,27 +369,8 @@ void TrainingWriteBuffers::addRow(
     float* rowBin = binaryInputNCHWUnpacked;
     float* rowGlobal = globalInputNC.data + curRows * numGlobalChannels;
     static_assert(NNModelVersion::latestInputsVersionImplemented == 7, "");
-    if(inputsVersion == 3) {
-      assert(NNInputs::NUM_FEATURES_SPATIAL_V3 == numBinaryChannels);
-      assert(NNInputs::NUM_FEATURES_GLOBAL_V3 == numGlobalChannels);
-      NNInputs::fillRowV3(board, hist, nextPlayer, nnInputParams, dataXLen, dataYLen, inputsUseNHWC, rowBin, rowGlobal);
-    }
-    else if(inputsVersion == 4) {
-      assert(NNInputs::NUM_FEATURES_SPATIAL_V4 == numBinaryChannels);
-      assert(NNInputs::NUM_FEATURES_GLOBAL_V4 == numGlobalChannels);
-      NNInputs::fillRowV4(board, hist, nextPlayer, nnInputParams, dataXLen, dataYLen, inputsUseNHWC, rowBin, rowGlobal);
-    }
-    else if(inputsVersion == 5) {
-      assert(NNInputs::NUM_FEATURES_SPATIAL_V5 == numBinaryChannels);
-      assert(NNInputs::NUM_FEATURES_GLOBAL_V5 == numGlobalChannels);
-      NNInputs::fillRowV5(board, hist, nextPlayer, nnInputParams, dataXLen, dataYLen, inputsUseNHWC, rowBin, rowGlobal);
-    }
-    else if(inputsVersion == 6) {
-      assert(NNInputs::NUM_FEATURES_SPATIAL_V6 == numBinaryChannels);
-      assert(NNInputs::NUM_FEATURES_GLOBAL_V6 == numGlobalChannels);
-      NNInputs::fillRowV6(board, hist, nextPlayer, nnInputParams, dataXLen, dataYLen, inputsUseNHWC, rowBin, rowGlobal);
-    }
-    else if(inputsVersion == 7) {
+    
+    if(inputsVersion == 7) {
       assert(NNInputs::NUM_FEATURES_SPATIAL_V7 == numBinaryChannels);
       assert(NNInputs::NUM_FEATURES_GLOBAL_V7 == numGlobalChannels);
       NNInputs::fillRowV7(board, hist, nextPlayer, nnInputParams, dataXLen, dataYLen, inputsUseNHWC, rowBin, rowGlobal);
@@ -504,7 +481,7 @@ void TrainingWriteBuffers::addRow(
 
   //Various other data
   rowGlobal[47] = hist.currentSelfKomi(nextPlayer,data.drawEquivalentWinsForWhite);
-  rowGlobal[48] = (hist.encorePhase == 2 || hist.rules.scoringRule == Rules::SCORING_AREA) ? 1.0f : 0.0f;
+  rowGlobal[48] =  1.0f ;
 
   //Earlier neural net metadata
   rowGlobal[49] = data.changedNeuralNets.size() > 0 ? 1.0f : 0.0f;
@@ -514,7 +491,7 @@ void TrainingWriteBuffers::addRow(
   rowGlobal[51] = (float)turnIdx;
   rowGlobal[52] = data.hitTurnLimit ? 1.0f : 0.0f;
   rowGlobal[53] = (float)data.startHist.moveHistory.size();
-  rowGlobal[54] = (float)data.numExtraBlack;
+  rowGlobal[54] = 0.0f;
 
   //Metadata about how the game was initialized
   rowGlobal[55] = (float)data.mode;
@@ -792,23 +769,7 @@ TrainingDataWriter::TrainingDataWriter(const string& outDir, ostream* dbgOut, in
   //Note that this inputsVersion is for data writing, it might be different than the inputsVersion used
   //to feed into a model during selfplay
   static_assert(NNModelVersion::latestInputsVersionImplemented == 7, "");
-  if(inputsVersion == 3) {
-    numBinaryChannels = NNInputs::NUM_FEATURES_SPATIAL_V3;
-    numGlobalChannels = NNInputs::NUM_FEATURES_GLOBAL_V3;
-  }
-  else if(inputsVersion == 4) {
-    numBinaryChannels = NNInputs::NUM_FEATURES_SPATIAL_V4;
-    numGlobalChannels = NNInputs::NUM_FEATURES_GLOBAL_V4;
-  }
-  else if(inputsVersion == 5) {
-    numBinaryChannels = NNInputs::NUM_FEATURES_SPATIAL_V5;
-    numGlobalChannels = NNInputs::NUM_FEATURES_GLOBAL_V5;
-  }
-  else if(inputsVersion == 6) {
-    numBinaryChannels = NNInputs::NUM_FEATURES_SPATIAL_V6;
-    numGlobalChannels = NNInputs::NUM_FEATURES_GLOBAL_V6;
-  }
-  else if(inputsVersion == 7) {
+  if(inputsVersion == 7) {
     numBinaryChannels = NNInputs::NUM_FEATURES_SPATIAL_V7;
     numGlobalChannels = NNInputs::NUM_FEATURES_GLOBAL_V7;
   }

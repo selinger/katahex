@@ -15,8 +15,6 @@ struct BoardHistory {
 
   //Chronological history of moves
   std::vector<Move> moveHistory;
-  //Chronological history of preventEncore, for ability to replay a board history
-  std::vector<bool> preventEncoreHistory;
   //Chronological history of hashes, including the latest board's hash.
   //Theses are the hashes that determine whether a board is the "same" or not given the rules
   //(e.g. they include the player if situational superko, and not if positional)
@@ -29,13 +27,9 @@ struct BoardHistory {
   //The board and player to move as of the very start, before moveHistory.
   Board initialBoard;
   Player initialPla;
-  int initialEncorePhase;
   //The "turn number" as of the initial board. Does not affect any rules, but possibly uses may
   //care about this number, for cases where we set up a position from midgame.
   int initialTurnNumber;
-  //How we count handicap at the start of the game. Set manually by some close-to-user-level apps or subcommands
-  bool assumeMultipleStartingBlackMovesAreHandicap;
-  bool whiteHasMoved;
 
   static const int NUM_RECENT_BOARDS = 6;
   Board recentBoards[NUM_RECENT_BOARDS];
@@ -50,34 +44,12 @@ struct BoardHistory {
 
   //Number of consecutive passes made that count for ending the game or phase
   int consecutiveEndingPasses;
-  //All ko hashes from which a player passed
-  std::vector<Hash128> hashesBeforeBlackPass;
-  std::vector<Hash128> hashesBeforeWhitePass;
-
-  //Encore phase 0,1,2 for territory scoring
-  int encorePhase;
-  //How many turns of history do we have in the current main or encore phase?
-  int numTurnsThisPhase;
-
-  //Ko-recapture-block locations for territory scoring in encore
-  bool koRecapBlocked[Board::MAX_ARR_SIZE];
-  Hash128 koRecapBlockHash; //Hash contribution from ko-recap-block locations in encore.
-
-  //Used to implement once-only rules for ko captures in encore
-  STRUCT_NAMED_TRIPLE(Hash128,posHashBeforeMove,Loc,moveLoc,Player,movePla,EncoreKoCapture);
-  std::vector<EncoreKoCapture> koCapturesInEncore;
-
-  //State of the grid as of the start of encore phase 2 for territory scoring
-  Color secondEncoreStartColors[Board::MAX_ARR_SIZE];
 
   //Amount that should be added to komi
   float whiteBonusScore;
-  float whiteHandicapBonusScore;
   //Is there a button to take?
   bool hasButton;
 
-  //Is the game been prolonged to stay in a given phase without proceeding to the next?
-  bool isPastNormalPhaseEnd;
 
   //Is the game supposed to be ended now?
   bool isGameFinished;
@@ -96,7 +68,7 @@ struct BoardHistory {
   BoardHistory();
   ~BoardHistory();
 
-  BoardHistory(const Board& board, Player pla, const Rules& rules, int encorePhase);
+  BoardHistory(const Board& board, Player pla, const Rules& rules);
 
   BoardHistory(const BoardHistory& other);
   BoardHistory& operator=(const BoardHistory& other);
@@ -105,13 +77,11 @@ struct BoardHistory {
   BoardHistory& operator=(BoardHistory&& other) noexcept;
 
   //Clears all history and status and bonus points, sets encore phase and rules
-  void clear(const Board& board, Player pla, const Rules& rules, int encorePhase);
+  void clear(const Board& board, Player pla, const Rules& rules);
   //Set only the komi field of the rules, does not clear history, does recompute game score if game is over.
   void setKomi(float newKomi);
   //Set the initial turn number. Affects nothing else.
   void setInitialTurnNumber(int n);
-  //Set assumeMultipleStartingBlackMovesAreHandicap and update bonus points accordingly
-  void setAssumeMultipleStartingBlackMovesAreHandicap(bool b);
 
   //Returns a copy of this board history rewound to the initial board, pla, etc, with other fields
   //(such as setInitialTurnNumber, setAssumeMultipleStartingBlackMovesAreHandicap) set identically.
@@ -127,12 +97,7 @@ struct BoardHistory {
   //Check if a move on the board is legal, taking into account the full game state and superko
   bool isLegal(const Board& board, Loc moveLoc, Player movePla) const;
   //Check if passing right now would end the current phase of play, or the entire game
-  bool passWouldEndPhase(const Board& board, Player movePla) const;
   bool passWouldEndGame(const Board& board, Player movePla) const;
-  //Check if this is the final phase of the game, such that ending it moves to scoring.
-  bool isFinalPhase() const;
-  //Check if the specified move is a pass-for-ko encore move.
-  bool isPassForKo(const Board& board, Loc moveLoc, Player movePla) const;
 
   //For all of the below, rootKoHashTable is optional and if provided will slightly speedup superko searches
   //This function should behave gracefully so long as it is pseudolegal (board.isLegal, but also still ok if the move is on board.ko_loc)
@@ -140,12 +105,10 @@ struct BoardHistory {
   //This allows for robustness when this code is being used for analysis or with external data sources.
   //preventEncore artifically prevents any move from entering or advancing the encore phase when using territory scoring.
   void makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player movePla, const KoHashTable* rootKoHashTable);
-  void makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player movePla, const KoHashTable* rootKoHashTable, bool preventEncore);
   //Make a move with legality checking, but be mostly tolerant and allow moves that can still be handled but that may not technically
   //be legal. This is intended for reading moves from SGFs and such where maybe we're getting moves that were played in a different
   //ruleset than ours. Returns true if successful, false if was illegal even unter tolerant rules.
   bool makeBoardMoveTolerant(Board& board, Loc moveLoc, Player movePla);
-  bool makeBoardMoveTolerant(Board& board, Loc moveLoc, Player movePla, bool preventEncore);
   bool isLegalTolerant(const Board& board, Loc moveLoc, Player movePla) const;
 
   //Slightly expensive, check if the entire game is all pass-alive-territory, and if so, declare the game finished
@@ -161,11 +124,6 @@ struct BoardHistory {
   void printDebugInfo(std::ostream& out, const Board& board) const;
   int numberOfKoHashOccurrencesInHistory(Hash128 koHash, const KoHashTable* rootKoHashTable) const;
 
-  //Does not do anything like assumeMultipleStartingBlackMovesAreHandicap, computes based on board alone
-  static int numHandicapStonesOnBoard(const Board& b);
-  //Takes into account assumeMultipleStartingBlackMovesAreHandicap
-  int computeNumHandicapStones() const;
-  int computeWhiteHandicapBonus() const;
 
   //Heuristically check if this history looks like an sgf variation where black passed to effectively
   //turn into white, or similar.
@@ -176,13 +134,9 @@ struct BoardHistory {
 
 private:
   bool koHashOccursInHistory(Hash128 koHash, const KoHashTable* rootKoHashTable) const;
-  void setKoRecapBlocked(Loc loc, bool b);
   int countAreaScoreWhiteMinusBlack(const Board& board, Color area[Board::MAX_ARR_SIZE]) const;
-  int countTerritoryAreaScoreWhiteMinusBlack(const Board& board, Color area[Board::MAX_ARR_SIZE]) const;
   void setFinalScoreAndWinner(float score);
   int newConsecutiveEndingPassesAfterPass() const;
-  bool phaseHasSpightlikeEndingAndPassHistoryClearing() const;
-  bool wouldBeSpightlikeEndingPass(Player movePla, Hash128 koHashBeforeMove) const;
 };
 
 struct KoHashTable {

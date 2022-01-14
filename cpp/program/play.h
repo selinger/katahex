@@ -42,7 +42,6 @@ struct ForkData {
 };
 
 struct ExtraBlackAndKomi {
-  int extraBlack = 0;
   float komiMean = 7.5f;
   float komiStdev = 7.5f;
   bool makeGameFair = false;
@@ -102,7 +101,7 @@ class GameInitializer {
     const Sgf::PositionSample* startPosSample
   );
 
-  Rules randomizeScoringAndTaxRules(Rules rules, Rand& randToUse) const;
+  Rules randomizeTaxRules(Rules rules, Rand& randToUse) const;
 
   //Only sample the space of possible rules
   Rules createRules();
@@ -130,13 +129,11 @@ class GameInitializer {
   Rand rand;
 
   std::vector<std::string> allowedKoRuleStrs;
-  std::vector<std::string> allowedScoringRuleStrs;
   std::vector<std::string> allowedTaxRuleStrs;
   std::vector<bool> allowedMultiStoneSuicideLegals;
   std::vector<bool> allowedButtons;
 
   std::vector<int> allowedKoRules;
-  std::vector<int> allowedScoringRules;
   std::vector<int> allowedTaxRules;
 
   std::vector<int> allowedBSizes;
@@ -147,15 +144,12 @@ class GameInitializer {
   float komiMean;
   float komiStdev;
   double komiAllowIntegerProb;
-  double handicapProb;
-  double handicapCompensateKomiProb;
   double forkCompensateKomiProb;
   double sgfCompensateKomiProb;
   double komiBigStdevProb;
   float komiBigStdev;
   bool komiAuto;
 
-  int numExtraBlackFixed;
   double noResultStdev;
   double drawRandRadius;
 

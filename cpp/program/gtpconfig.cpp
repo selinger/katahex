@@ -49,8 +49,6 @@ $$MULTI_STONE_SUICIDE
 
 $$BUTTON
 
-$$WHITE_HANDICAP_BONUS
-
 $$FRIENDLY_PASS_OK
 
 # Bot behavior---------------------------------------------------------------------------------------
@@ -100,9 +98,6 @@ resignConsecTurns = 3
 # Uncomment and set to false to disable this.
 # rootSymmetryPruning = true
 
-# Uncomment and set to true to make KataGo avoid a particular joseki that some KataGo nets misevaluate,
-# and also to improve opening diversity versus some particular other bots that like to play it all the time.
-# avoidMYTDaggerHack = false
 
 # Have KataGo mildly prefer to avoid playing the same joseki in every corner of the board.
 # Uncomment to set to a specific value. Otherwise, defaults to 0 in even games, and to 0.005 in handicap games.
@@ -223,16 +218,10 @@ string GTPConfig::makeConfig(
     assert(pos != string::npos);
     config.replace(pos, key.size(), replacement);
   };
-
-  if(rules.koRule == Rules::KO_SIMPLE)      replace("$$KO_RULE", "koRule = SIMPLE  # options: SIMPLE, POSITIONAL, SITUATIONAL");
-  else if(rules.koRule == Rules::KO_POSITIONAL)  replace("$$KO_RULE", "koRule = POSITIONAL  # options: SIMPLE, POSITIONAL, SITUATIONAL");
-  else if(rules.koRule == Rules::KO_SITUATIONAL) replace("$$KO_RULE", "koRule = SITUATIONAL  # options: SIMPLE, POSITIONAL, SITUATIONAL");
-  else if(rules.koRule == Rules::KO_SPIGHT) replace("$$KO_RULE", "koRule = SPIGHT  # options: SIMPLE, POSITIONAL, SITUATIONAL");
+if(rules.koRule == Rules::KO_POSITIONAL)  replace("$$KO_RULE", "koRule = POSITIONAL  # options:  POSITIONAL, SITUATIONAL");
+  else if(rules.koRule == Rules::KO_SITUATIONAL) replace("$$KO_RULE", "koRule = SITUATIONAL  #  SIMPLE, POSITIONAL, SITUATIONAL");
   else { ASSERT_UNREACHABLE; }
 
-  if(rules.scoringRule == Rules::SCORING_AREA)            replace("$$SCORING_RULE", "scoringRule = AREA  # options: AREA, TERRITORY");
-  else if(rules.scoringRule == Rules::SCORING_TERRITORY)  replace("$$SCORING_RULE", "scoringRule = TERRITORY  # options: AREA, TERRITORY");
-  else { ASSERT_UNREACHABLE; }
 
   if(rules.taxRule == Rules::TAX_NONE)      replace("$$TAX_RULE", "taxRule = NONE  # options: NONE, SEKI, ALL");
   else if(rules.taxRule == Rules::TAX_SEKI) replace("$$TAX_RULE", "taxRule = SEKI  # options: NONE, SEKI, ALL");
@@ -248,10 +237,6 @@ string GTPConfig::makeConfig(
   if(rules.friendlyPassOk) replace("$$FRIENDLY_PASS_OK", "friendlyPassOk = true");
   else                     replace("$$FRIENDLY_PASS_OK", "friendlyPassOk = false");
 
-  if(rules.whiteHandicapBonusRule == Rules::WHB_ZERO)              replace("$$WHITE_HANDICAP_BONUS", "whiteHandicapBonus = 0  # options: 0, N, N-1");
-  else if(rules.whiteHandicapBonusRule == Rules::WHB_N)            replace("$$WHITE_HANDICAP_BONUS", "whiteHandicapBonus = N  # options: 0, N, N-1");
-  else if(rules.whiteHandicapBonusRule == Rules::WHB_N_MINUS_ONE)  replace("$$WHITE_HANDICAP_BONUS", "whiteHandicapBonus = N-1  # options: 0, N, N-1");
-  else { ASSERT_UNREACHABLE; }
 
   if(maxVisits < ((int64_t)1 << 50)) replace("$$MAX_VISITS", "maxVisits = " + Global::int64ToString(maxVisits));
   else                               replace("$$MAX_VISITS", "# maxVisits = 500");

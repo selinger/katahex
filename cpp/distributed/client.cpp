@@ -1035,7 +1035,6 @@ static string getGameTypeStr(const FinishedGameData* gameData) {
     gameData->mode == FinishedGameData::MODE_NORMAL ? "normal" :
     gameData->mode == FinishedGameData::MODE_CLEANUP_TRAINING ? "cleanup_training" :
     gameData->mode == FinishedGameData::MODE_FORK ? "fork" :
-    gameData->mode == FinishedGameData::MODE_HANDICAP ? "handicap" :
     gameData->mode == FinishedGameData::MODE_SGFPOS ? "sgfpos" :
     gameData->mode == FinishedGameData::MODE_HINTPOS ? "hintpos" :
     gameData->mode == FinishedGameData::MODE_HINTFORK ? "hintfork" :
@@ -1066,7 +1065,6 @@ bool Connection::uploadTrainingGameAndData(
 
     int boardSizeX = gameData->startBoard.x_size;
     int boardSizeY = gameData->startBoard.y_size;
-    int handicap = gameData->handicapForSgf;
     double komi = gameData->startHist.rules.komi;
     string rules = gameData->startHist.rules.toJsonStringNoKomiMaybeOmitStuff();
     json extraMetadata;
@@ -1091,7 +1089,6 @@ bool Connection::uploadTrainingGameAndData(
     httplib::MultipartFormDataItems items = {
       { "board_size_x", Global::intToString(boardSizeX), "", "" },
       { "board_size_y", Global::intToString(boardSizeY), "", "" },
-      { "handicap", Global::intToString(handicap), "", "" },
       { "komi", Global::doubleToString(komi), "", "" },
       { "gametype", gametype, "", "" },
       { "rules", rules, "", "" },
@@ -1147,7 +1144,6 @@ bool Connection::uploadRatingGame(
 
     int boardSizeX = gameData->startBoard.x_size;
     int boardSizeY = gameData->startBoard.y_size;
-    int handicap = (gameData->numExtraBlack > 0 ? (gameData->numExtraBlack + 1) : 0);
     double komi = gameData->startHist.rules.komi;
     string rules = gameData->startHist.rules.toJsonStringNoKomiMaybeOmitStuff();
     json extraMetadata = json({});
@@ -1169,7 +1165,6 @@ bool Connection::uploadRatingGame(
     httplib::MultipartFormDataItems items = {
       { "board_size_x", Global::intToString(boardSizeX), "", "" },
       { "board_size_y", Global::intToString(boardSizeY), "", "" },
-      { "handicap", Global::intToString(handicap), "", "" },
       { "komi", Global::doubleToString(komi), "", "" },
       { "gametype", gametype, "", "" },
       { "rules", rules, "", "" },

@@ -2,12 +2,13 @@
 #include "../core/config_parser.h"
 #include "../core/fileutils.h"
 #include "../core/timer.h"
+#include "../core/test.h"
+#include "../tests/tests.h"
 #include "../dataio/sgf.h"
 #include "../search/asyncbot.h"
 #include "../program/setup.h"
 #include "../program/playutils.h"
 #include "../program/gtpconfig.h"
-#include "../tests/tests.h"
 #include "../command/commandline.h"
 #include "../main.h"
 
@@ -274,7 +275,7 @@ int MainCmds::benchmark(const vector<string>& args) {
 static void warmStartNNEval(const CompactSgf* sgf, Logger& logger, const SearchParams& params, NNEvaluator* nnEval, Rand& seedRand) {
   Board board(sgf->xSize,sgf->ySize);
   Player nextPla = P_BLACK;
-  BoardHistory hist(board,nextPla,Rules(),0);
+  BoardHistory hist(board,nextPla,Rules());
   SearchParams thisParams = params;
   thisParams.numThreads = 1;
   thisParams.maxVisits = 5;

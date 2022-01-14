@@ -150,9 +150,6 @@ int MainCmds::analysis(const vector<string>& args) {
   }
 
   const int analysisPVLen = cfg.contains("analysisPVLen") ? cfg.getInt("analysisPVLen",1,100) : 15;
-  const bool assumeMultipleStartingBlackMovesAreHandicap =
-    cfg.contains("assumeMultipleStartingBlackMovesAreHandicap") ? cfg.getBool("assumeMultipleStartingBlackMovesAreHandicap") : true;
-  const bool preventEncore = cfg.contains("preventCleanupPhase") ? cfg.getBool("preventCleanupPhase") : true;
 
   NNEvaluator* nnEval;
   {
@@ -253,7 +250,7 @@ int MainCmds::analysis(const vector<string>& args) {
   };
 
   //Returns false if no analysis was reportable due to there being no root node or search results.
-  auto reportAnalysis = [&preventEncore,&pushToWrite](const AnalyzeRequest* request, const Search* search, bool isDuringSearch) {
+  auto reportAnalysis = [&pushToWrite](const AnalyzeRequest* request, const Search* search, bool isDuringSearch) {
     static constexpr int ownershipMinVisits = 3;
     json ret;
     ret["id"] = request->id;
@@ -262,7 +259,7 @@ int MainCmds::analysis(const vector<string>& args) {
 
     bool success = search->getAnalysisJson(
       request->perspective,
-      request->analysisPVLen, ownershipMinVisits, preventEncore, request->includePolicy,
+      request->analysisPVLen, ownershipMinVisits,  request->includePolicy,
       request->includeOwnership,request->includeOwnershipStdev,
       request->includeMovesOwnership,request->includeMovesOwnershipStdev,
       request->includePVVisits,
@@ -800,22 +797,6 @@ int MainCmds::analysis(const vector<string>& args) {
         }
       }
 
-      if(input.find("whiteHandicapBonus") != input.end()) {
-        if(!input["whiteHandicapBonus"].is_string()) {
-          reportErrorForId(rbase.id, "whiteHandicapBonus", "Must be a string");
-          continue;
-        }
-        string s = input["whiteHandicapBonus"].get<string>();
-        try {
-          int whiteHandicapBonusRule = Rules::parseWhiteHandicapBonusRule(s);
-          rules.whiteHandicapBonusRule = whiteHandicapBonusRule;
-        }
-        catch(const StringError& err) {
-          reportErrorForId(rbase.id, "whiteHandicapBonus", err.what());
-          continue;
-        }
-      }
-
       if(input.find("overrideSettings") != input.end()) {
         json settings = input["overrideSettings"];
         if(!settings.is_object()) {
@@ -990,7 +971,7 @@ int MainCmds::analysis(const vector<string>& args) {
         if(moveHistory.size() > 0)
           initialPlayer = moveHistory[0].pla;
         else
-          initialPlayer = BoardHistory::numHandicapStonesOnBoard(board) > 0 ? P_WHITE : P_BLACK;
+          initialPlayer = P_BLACK;
       }
 
       bool rulesWereSupported;
@@ -1003,8 +984,7 @@ int MainCmds::analysis(const vector<string>& args) {
       }
 
       Player nextPla = initialPlayer;
-      BoardHistory hist(board,nextPla,rules,0);
-      hist.setAssumeMultipleStartingBlackMovesAreHandicap(assumeMultipleStartingBlackMovesAreHandicap);
+      BoardHistory hist(board,nextPla,rules);
 
       //Build and enqueue requests
       vector<AnalyzeRequest*> newRequests;
@@ -1049,11 +1029,10 @@ int MainCmds::analysis(const vector<string>& args) {
         Loc moveLoc = moveHistory[turnNumber].loc;
         if(movePla != nextPla) {
           board.clearSimpleKoLoc();
-          hist.clear(board,movePla,rules,hist.encorePhase);
-          hist.setAssumeMultipleStartingBlackMovesAreHandicap(assumeMultipleStartingBlackMovesAreHandicap);
+          hist.clear(board,movePla,rules);
         }
 
-        bool suc = hist.makeBoardMoveTolerant(board,moveLoc,movePla,preventEncore);
+        bool suc = hist.makeBoardMoveTolerant(board,moveLoc,movePla);
         if(!suc) {
           reportErrorForId(rbase.id, "moves", "Illegal move " + Global::intToString(turnNumber) + ": " + Location::toString(moveLoc,board));
           foundIllegalMove = true;

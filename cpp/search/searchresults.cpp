@@ -74,7 +74,6 @@ bool Search::getPlaySelectionValues(
 
   double totalChildWeight = 0.0;
   double maxChildWeight = 0.0;
-  const bool suppressPass = shouldSuppressPass(&node);
 
   //Store up basic weights
   int childrenCapacity;
@@ -92,16 +91,9 @@ bool Search::getPlaySelectionValues(
     totalChildWeight += childWeight;
     if(childWeight > maxChildWeight)
       maxChildWeight = childWeight;
-    if(suppressPass && moveLoc == Board::PASS_LOC) {
-      playSelectionValues.push_back(0.0);
-      if(retVisitCounts != NULL)
-        (*retVisitCounts).push_back(0.0);
-    }
-    else {
-      playSelectionValues.push_back((double)childWeight);
-      if(retVisitCounts != NULL)
-        (*retVisitCounts).push_back((double)edgeVisits);
-    }
+    playSelectionValues.push_back((double)childWeight);
+    if(retVisitCounts != NULL)
+      (*retVisitCounts).push_back((double)edgeVisits);
   }
 
   int numChildren = playSelectionValues.size();
@@ -150,10 +142,6 @@ bool Search::getPlaySelectionValues(
     for(int i = 0; i<numChildren; i++) {
       const SearchNode* child = children[i].getIfAllocated();
       Loc moveLoc = children[i].getMoveLocRelaxed();
-      if(suppressPass && moveLoc == Board::PASS_LOC) {
-        playSelectionValues[i] = 0;
-        continue;
-      }
       if(i != mostWeightedIdx) {
         int64_t edgeVisits = children[i].getEdgeVisits();
         double reduced = getReducedPlaySelectionWeight(
@@ -1559,7 +1547,6 @@ bool Search::getAnalysisJson(
   const Player perspective,
   int analysisPVLen,
   double ownershipMinWeight,
-  bool preventEncore,
   bool includePolicy,
   bool includeOwnership,
   bool includeOwnershipStdev,
@@ -1613,8 +1600,7 @@ bool Search::getAnalysisJson(
       moveInfo["isSymmetryOf"] = Location::toString(data.isSymmetryOf, board);
 
     json pv = json::array();
-    int pvLen =
-      (preventEncore && data.pvContainsPass()) ? data.getPVLenUpToPhaseEnd(board, hist, rootPla) : (int)data.pv.size();
+    int pvLen = (int)data.pv.size();
     for(int j = 0; j < pvLen; j++)
       pv.push_back(Location::toString(data.pv[j], board));
     moveInfo["pv"] = pv;

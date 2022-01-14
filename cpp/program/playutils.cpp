@@ -20,8 +20,7 @@ static int getDefaultMaxExtraBlack(double sqrtBoardArea) {
 }
 
 ExtraBlackAndKomi PlayUtils::chooseExtraBlackAndKomi(
-  float base, float stdev, double allowIntegerProb,
-  double handicapProb, int numExtraBlackFixed,
+  float base, float stdev, double allowIntegerProb, 
   double bigStdevProb, float bigStdev, double sqrtBoardArea, Rand& rand
 ) {
   int extraBlack = 0;
@@ -35,19 +34,9 @@ ExtraBlackAndKomi PlayUtils::chooseExtraBlackAndKomi(
   //Adjust for board size, so that we don't give the same massive komis on smaller boards
   stdevToUse = stdevToUse * (float)(sqrtBoardArea / 19.0);
 
-  //Add handicap stones
-  int defaultMaxExtraBlack = getDefaultMaxExtraBlack(sqrtBoardArea);
-  if((numExtraBlackFixed > 0 || defaultMaxExtraBlack > 0) && rand.nextBool(handicapProb)) {
-    if(numExtraBlackFixed > 0)
-      extraBlack = numExtraBlackFixed;
-    else
-      extraBlack += 1+rand.nextUInt(defaultMaxExtraBlack);
-  }
-
   bool allowInteger = rand.nextBool(allowIntegerProb);
 
   ExtraBlackAndKomi ret;
-  ret.extraBlack = extraBlack;
   ret.komiMean = komi;
   ret.komiStdev = stdevToUse;
   //These two are set later
@@ -237,75 +226,6 @@ void PlayUtils::initializeGameUsingPolicy(
 }
 
 
-//Place black handicap stones, free placement
-//Does NOT switch the initial player of the board history to white
-void PlayUtils::playExtraBlack(
-  Search* bot,
-  int numExtraBlack,
-  Board& board,
-  BoardHistory& hist,
-  double temperature,
-  Rand& gameRand
-) {
-  Player pla = P_BLACK;
-
-  NNResultBuf buf;
-  for(int i = 0; i<numExtraBlack; i++) {
-    MiscNNInputParams nnInputParams;
-    nnInputParams.drawEquivalentWinsForWhite = bot->searchParams.drawEquivalentWinsForWhite;
-    bot->nnEvaluator->evaluate(board,hist,pla,nnInputParams,buf,false,false);
-    std::shared_ptr<NNOutput> nnOutput = std::move(buf.result);
-
-    bool allowPass = false;
-    Loc banMove = Board::NULL_LOC;
-    Loc loc = chooseRandomPolicyMove(nnOutput.get(), board, hist, pla, gameRand, temperature, allowPass, banMove);
-    if(loc == Board::NULL_LOC)
-      break;
-
-    assert(hist.isLegal(board,loc,pla));
-    hist.makeBoardMoveAssumeLegal(board,loc,pla,NULL);
-    hist.clear(board,pla,hist.rules,0);
-  }
-
-  bot->setPosition(pla,board,hist);
-}
-
-void PlayUtils::placeFixedHandicap(Board& board, int n) {
-  int xSize = board.x_size;
-  int ySize = board.y_size;
-  if(xSize < 7 || ySize < 7)
-    throw StringError("Board is too small for fixed handicap");
-  if((xSize % 2 == 0 || ySize % 2 == 0) && n > 4)
-    throw StringError("Fixed handicap > 4 is not allowed on boards with even dimensions");
-  if((xSize <= 7 || ySize <= 7) && n > 4)
-    throw StringError("Fixed handicap > 4 is not allowed on boards with size 7");
-  if(n < 2)
-    throw StringError("Fixed handicap < 2 is not allowed");
-  if(n > 9)
-    throw StringError("Fixed handicap > 9 is not allowed");
-
-  board = Board(xSize,ySize);
-
-  int xCoords[3]; //Corner, corner, side
-  int yCoords[3]; //Corner, corner, side
-  if(xSize <= 12) { xCoords[0] = 2; xCoords[1] = xSize-3; xCoords[2] = xSize/2; }
-  else            { xCoords[0] = 3; xCoords[1] = xSize-4; xCoords[2] = xSize/2; }
-  if(ySize <= 12) { yCoords[0] = 2; yCoords[1] = ySize-3; yCoords[2] = ySize/2; }
-  else            { yCoords[0] = 3; yCoords[1] = ySize-4; yCoords[2] = ySize/2; }
-
-  auto s = [&](int xi, int yi) {
-    board.setStone(Location::getLoc(xCoords[xi],yCoords[yi],board.x_size),P_BLACK);
-  };
-  if(n == 2) { s(0,1); s(1,0); }
-  else if(n == 3) { s(0,1); s(1,0); s(0,0); }
-  else if(n == 4) { s(0,1); s(1,0); s(0,0); s(1,1); }
-  else if(n == 5) { s(0,1); s(1,0); s(0,0); s(1,1); s(2,2); }
-  else if(n == 6) { s(0,1); s(1,0); s(0,0); s(1,1); s(0,2); s(1,2); }
-  else if(n == 7) { s(0,1); s(1,0); s(0,0); s(1,1); s(0,2); s(1,2); s(2,2); }
-  else if(n == 8) { s(0,1); s(1,0); s(0,0); s(1,1); s(0,2); s(1,2); s(2,0); s(2,1); }
-  else if(n == 9) { s(0,1); s(1,0); s(0,0); s(1,1); s(0,2); s(1,2); s(2,0); s(2,1); s(2,2); }
-  else { ASSERT_UNREACHABLE; }
-}
 
 double PlayUtils::getHackedLCBForWinrate(const Search* search, const AnalysisData& data, Player pla) {
   double winrate = 0.5 * (1.0 + data.winLossValue);
@@ -590,7 +510,7 @@ float PlayUtils::computeLead(
   float oldKomi = hist.rules.komi;
   double naiveKomi = getNaiveEvenKomiHelper(scoreWLCache,botB,botW,board,hist,pla,numVisits,otherGameProps,looseClipping);
 
-  bool granularityIsCoarse = hist.rules.scoringRule == Rules::SCORING_AREA && !hist.rules.hasButton;
+  bool granularityIsCoarse =  !hist.rules.hasButton;
   if(!granularityIsCoarse) {
     assert(hist.rules.komi == oldKomi);
     return (float)(oldKomi - naiveKomi);
@@ -1002,21 +922,15 @@ void PlayUtils::printGenmoveLog(ostream& out, const AsyncBot* bot, const NNEvalu
 }
 
 Rules PlayUtils::genRandomRules(Rand& rand) {
-  vector<int> allowedKoRules = { Rules::KO_SIMPLE, Rules::KO_POSITIONAL, Rules::KO_SITUATIONAL };
-  vector<int> allowedScoringRules = { Rules::SCORING_AREA, Rules::SCORING_TERRITORY };
+  vector<int> allowedKoRules = { Rules::KO_POSITIONAL, Rules::KO_SITUATIONAL };
   vector<int> allowedTaxRules = { Rules::TAX_NONE, Rules::TAX_SEKI, Rules::TAX_ALL };
 
   Rules rules;
   rules.koRule = allowedKoRules[rand.nextUInt(allowedKoRules.size())];
-  rules.scoringRule = allowedScoringRules[rand.nextUInt(allowedScoringRules.size())];
   rules.taxRule = allowedTaxRules[rand.nextUInt(allowedTaxRules.size())];
   rules.multiStoneSuicideLegal = rand.nextBool(0.5);
 
-  if(rules.scoringRule == Rules::SCORING_AREA)
-    rules.hasButton = rand.nextBool(0.5);
-  else
-    rules.hasButton = false;
-  return rules;
+  rules.hasButton = rand.nextBool(0.5);
 }
 
 Loc PlayUtils::maybeCleanupBeforePass(
@@ -1033,8 +947,8 @@ Loc PlayUtils::maybeCleanupBeforePass(
   const bool doCleanupBeforePass =
     cleanupBeforePass == enabled_t::True ? true :
     cleanupBeforePass == enabled_t::False ? false :
-    (rules.friendlyPassOk == false && rules.scoringRule == Rules::SCORING_AREA);
-  if(doCleanupBeforePass && moveLoc == Board::PASS_LOC && hist.isFinalPhase() && !hist.hasButton) {
+    (rules.friendlyPassOk == false);
+  if(doCleanupBeforePass && moveLoc == Board::PASS_LOC  && !hist.hasButton) {
     const Board& board = bot->getRootBoard();
     const Color* safeArea = bot->getSearch()->rootSafeArea;
     assert(safeArea != NULL);
@@ -1075,14 +989,12 @@ Loc PlayUtils::maybeFriendlyPass(
     const bool doFriendlyPass =
       friendlyPass == enabled_t::True ? true :
       friendlyPass == enabled_t::False ? false :
-      (rules.friendlyPassOk == true && rules.scoringRule == Rules::SCORING_AREA);
+      (rules.friendlyPassOk == true );
     shouldProceed = (
       doFriendlyPass &&
       moveLoc != Board::PASS_LOC &&
-      rules.scoringRule == Rules::SCORING_AREA &&
-      hist.isFinalPhase() &&
       !hist.hasButton &&
-      hist.passWouldEndPhase(board,pla) &&
+      hist.passWouldEndGame(board,pla) &&
       hist.moveHistory.size() > 0 &&
       hist.moveHistory[hist.moveHistory.size()-1].pla == getOpp(pla) &&
       hist.moveHistory[hist.moveHistory.size()-1].loc == Board::PASS_LOC
