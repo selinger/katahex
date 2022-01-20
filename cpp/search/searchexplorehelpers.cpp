@@ -400,8 +400,6 @@ void Search::selectBestChildToDescend(
     if(isRoot) {
       assert(thread.board.pos_hash == rootBoard.pos_hash);
       assert(thread.pla == rootPla);
-      if(!isAllowedRootMove(moveLoc))
-        continue;
     }
     if(avoidMoveUntilByLoc.size() > 0) {
       assert(avoidMoveUntilByLoc.size() >= Board::MAX_ARR_SIZE);

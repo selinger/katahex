@@ -73,8 +73,6 @@ Search::Search(SearchParams params, NNEvaluator* nnEval, Logger* lg, const strin
    avoidMoveUntilByLocBlack(),avoidMoveUntilByLocWhite(),
    rootSymmetries(),
    rootPruneOnlySymmetries(),
-   rootSafeArea(NULL),
-   recentScoreCenter(0.0),
    mirroringPla(C_EMPTY),
    mirrorAdvantage(0.0),
    mirrorCenterSymmetryError(1e10),
@@ -84,7 +82,6 @@ Search::Search(SearchParams params, NNEvaluator* nnEval, Logger* lg, const strin
    lastSearchNumPlayouts(0),
    effectiveSearchTimeCarriedOver(0.0),
    randSeed(rSeed),
-   rootKoHashTable(NULL),
    valueWeightDistribution(NULL),
    normToTApproxZ(0.0),
    normToTApproxTable(),
@@ -113,9 +110,7 @@ Search::Search(SearchParams params, NNEvaluator* nnEval, Logger* lg, const strin
   assert(nnXLen > 0 && nnXLen <= NNPos::MAX_BOARD_LEN);
   assert(nnYLen > 0 && nnYLen <= NNPos::MAX_BOARD_LEN);
   policySize = NNPos::getPolicySize(nnXLen,nnYLen);
-  rootKoHashTable = new KoHashTable();
 
-  rootSafeArea = new Color[Board::MAX_ARR_SIZE];
 
   valueWeightDistribution = new DistributionTable(
     [](double z) { return FancyMath::tdistpdf(z,VALUE_WEIGHT_DEGREES_OF_FREEDOM); },
@@ -130,14 +125,11 @@ Search::Search(SearchParams params, NNEvaluator* nnEval, Logger* lg, const strin
   mutexPool = new MutexPool(nodeTable->mutexPool->getNumMutexes());
 
   rootHistory.clear(rootBoard,rootPla,Rules());
-  rootKoHashTable->recompute(rootHistory);
 }
 
 Search::~Search() {
   clearSearch();
 
-  delete[] rootSafeArea;
-  delete rootKoHashTable;
   delete valueWeightDistribution;
 
   delete nodeTable;
@@ -171,7 +163,6 @@ void Search::setPosition(Player pla, const Board& board, const BoardHistory& his
   plaThatSearchIsFor = C_EMPTY;
   rootBoard = board;
   rootHistory = history;
-  rootKoHashTable->recompute(rootHistory);
   avoidMoveUntilByLocBlack.clear();
   avoidMoveUntilByLocWhite.clear();
 }
@@ -185,7 +176,6 @@ void Search::setPlayerAndClearHistory(Player pla) {
   //Preserve this value even when we get multiple moves in a row by some player
   rootHistory.clear(rootBoard,rootPla,rules);
 
-  rootKoHashTable->recompute(rootHistory);
   avoidMoveUntilByLocBlack.clear();
   avoidMoveUntilByLocWhite.clear();
 }
@@ -673,7 +663,7 @@ void Search::beginSearch(bool pondering) {
           children[i].setMoveLoc(Board::NULL_LOC);
           //Maybe add it back. Specifically check for legality just in case weird graph interaction in the
           //tree gives wrong legality - ensure that once we are the root, we are strict on legality.
-          if(rootHistory.isLegal(rootBoard,moveLoc,rootPla) && isAllowedRootMove(moveLoc)) {
+          if(rootHistory.isLegal(rootBoard,moveLoc,rootPla)) {
             children[numGoodChildren].store(child);
             children[numGoodChildren].setEdgeVisits(edgeVisits);
             children[numGoodChildren].setMoveLoc(moveLoc);

@@ -15,14 +15,6 @@ struct BoardHistory {
 
   //Chronological history of moves
   std::vector<Move> moveHistory;
-  //Chronological history of hashes, including the latest board's hash.
-  //Theses are the hashes that determine whether a board is the "same" or not given the rules
-  //(e.g. they include the player if situational superko, and not if positional)
-  //Cleared on a pass if passes clear ko bans
-  std::vector<Hash128> koHashHistory;
-  //The index of the first turn for which we have a koHashHistory (since depending on rules, passes may clear it).
-  //Index 0 = starting state, index 1 = state after move 0, index 2 = state after move 1, etc...
-  int firstTurnIdxWithKoHistory;
 
   //The board and player to move as of the very start, before moveHistory.
   Board initialBoard;
@@ -36,19 +28,10 @@ struct BoardHistory {
   int currentRecentBoardIdx;
   Player presumedNextMovePla;
 
-  //Did this board location ever have a stone there before, or was it ever played?
-  //(Also includes locations of suicides)
-  bool wasEverOccupiedOrPlayed[Board::MAX_ARR_SIZE];
-  //Locations where the next player is not allowed to play due to superko
-  bool superKoBanned[Board::MAX_ARR_SIZE];
 
-  //Number of consecutive passes made that count for ending the game or phase
-  int consecutiveEndingPasses;
 
   //Amount that should be added to komi
   float whiteBonusScore;
-  //Is there a button to take?
-  bool hasButton;
 
 
   //Is the game supposed to be ended now?
@@ -57,7 +40,10 @@ struct BoardHistory {
   Player winner;
   //Score difference of the game if the game is supposed to have ended now, does NOT take into account whiteKomiAdjustmentForDrawUtility
   //Always an integer or half-integer.
+
+  //不删，以后可能用
   float finalWhiteMinusBlackScore;
+
   //True if this game is supposed to be ended with a score
   bool isScored;
   //True if this game is supposed to be ended but there is no result
@@ -96,8 +82,6 @@ struct BoardHistory {
 
   //Check if a move on the board is legal, taking into account the full game state and superko
   bool isLegal(const Board& board, Loc moveLoc, Player movePla) const;
-  //Check if passing right now would end the current phase of play, or the entire game
-  bool passWouldEndGame(const Board& board, Player movePla) const;
 
   //For all of the below, rootKoHashTable is optional and if provided will slightly speedup superko searches
   //This function should behave gracefully so long as it is pseudolegal (board.isLegal, but also still ok if the move is on board.ko_loc)
@@ -111,54 +95,18 @@ struct BoardHistory {
   bool makeBoardMoveTolerant(Board& board, Loc moveLoc, Player movePla);
   bool isLegalTolerant(const Board& board, Loc moveLoc, Player movePla) const;
 
-  //Slightly expensive, check if the entire game is all pass-alive-territory, and if so, declare the game finished
-  void endGameIfAllPassAlive(const Board& board);
-  //Score the board as-is. If the game is already finished, and is NOT a no-result, then this should be idempotent.
-  void endAndScoreGameNow(const Board& board);
-  void endAndScoreGameNow(const Board& board, Color area[Board::MAX_ARR_SIZE]);
-  void getAreaNow(const Board& board, Color area[Board::MAX_ARR_SIZE]) const;
 
   void setWinnerByResignation(Player pla);
+  void setWinner(Player pla);
 
   void printBasicInfo(std::ostream& out, const Board& board) const;
   void printDebugInfo(std::ostream& out, const Board& board) const;
-  int numberOfKoHashOccurrencesInHistory(Hash128 koHash, const KoHashTable* rootKoHashTable) const;
 
-
-  //Heuristically check if this history looks like an sgf variation where black passed to effectively
-  //turn into white, or similar.
-  bool hasBlackPassOrWhiteFirst() const;
 
   //Compute a hash that takes into account the full situation, the rules, discretized komi, and any immediate ko prohibitions.
   static Hash128 getSituationRulesAndKoHash(const Board& board, const BoardHistory& hist, Player nextPlayer, double drawEquivalentWinsForWhite);
 
 private:
-  bool koHashOccursInHistory(Hash128 koHash, const KoHashTable* rootKoHashTable) const;
-  int countAreaScoreWhiteMinusBlack(const Board& board, Color area[Board::MAX_ARR_SIZE]) const;
-  void setFinalScoreAndWinner(float score);
-  int newConsecutiveEndingPassesAfterPass() const;
-};
-
-struct KoHashTable {
-  uint32_t* idxTable;
-  std::vector<Hash128> koHashHistorySortedByLowBits;
-  int firstTurnIdxWithKoHistory;
-
-  static const int TABLE_SIZE = 1 << 10;
-  static const uint64_t TABLE_MASK = TABLE_SIZE-1;
-
-  KoHashTable();
-  ~KoHashTable();
-
-  KoHashTable(const KoHashTable& other) = delete;
-  KoHashTable& operator=(const KoHashTable& other) = delete;
-
-  size_t size() const;
-
-  void recompute(const BoardHistory& history);
-  bool containsHash(Hash128 hash) const;
-  int numberOfOccurrencesOfHash(Hash128 hash) const;
-
 };
 
 

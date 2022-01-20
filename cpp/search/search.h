@@ -91,10 +91,6 @@ struct Search {
   std::vector<int> rootSymmetries;
   std::vector<int> rootPruneOnlySymmetries;
 
-  //Strictly pass-alive areas in the root board position
-  Color* rootSafeArea;
-  //Used to center for dynamic scorevalue
-  double recentScoreCenter;
 
   //If the opponent is mirroring, then the color of that opponent, for countering mirroring
   Player mirroringPla;
@@ -113,8 +109,6 @@ struct Search {
 
   std::string randSeed;
 
-  //Contains all koHashes of positions/situations up to and including the root
-  KoHashTable* rootKoHashTable;
 
   //Precomputed distribution for downweighting child values based on their values
   DistributionTable* valueWeightDistribution;
@@ -391,7 +385,6 @@ private:
   // Miscellaneous search biasing helpers, root move selection, etc.
   // searchhelpers.cpp
   //----------------------------------------------------------------------------------------
-  bool isAllowedRootMove(Loc moveLoc) const;
   double getPatternBonus(Hash128 patternBonusHash, Player prevMovePla) const;
   double getEndingWhiteScoreBonus(const SearchNode& parent, Loc moveLoc) const;
 

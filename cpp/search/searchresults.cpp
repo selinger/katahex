@@ -211,13 +211,11 @@ bool Search::getPlaySelectionValues(
     if(nnOutput == NULL || &node != rootNode || !allowDirectPolicyMoves)
       return false;
 
-    bool obeyAllowedRootMove = true;
-    while(true) {
       for(int movePos = 0; movePos<policySize; movePos++) {
         Loc moveLoc = NNPos::posToLoc(movePos,rootBoard.x_size,rootBoard.y_size,nnXLen,nnYLen);
         const float* policyProbs = nnOutput->getPolicyProbsMaybeNoised();
         double policyProb = policyProbs[movePos];
-        if(!rootHistory.isLegal(rootBoard,moveLoc,rootPla) || policyProb < 0 || (obeyAllowedRootMove && !isAllowedRootMove(moveLoc)))
+        if(!rootHistory.isLegal(rootBoard,moveLoc,rootPla) || policyProb < 0 )
           continue;
         const std::vector<int>& avoidMoveUntilByLoc = rootPla == P_BLACK ? avoidMoveUntilByLocBlack : avoidMoveUntilByLocWhite;
         if(avoidMoveUntilByLoc.size() > 0) {
@@ -230,13 +228,6 @@ bool Search::getPlaySelectionValues(
         playSelectionValues.push_back(policyProb);
         numChildren++;
       }
-      //Still no children? Then at this point just ignore isAllowedRootMove.
-      if(numChildren == 0 && obeyAllowedRootMove) {
-        obeyAllowedRootMove = false;
-        continue;
-      }
-      break;
-    }
   }
 
   //Might happen absurdly rarely if we both have no children and don't properly have an nnOutput

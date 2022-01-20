@@ -1083,18 +1083,6 @@ void NNInputs::fillRowV7(
     selfKomi = -bArea-1.0f;
   rowGlobal[5] = selfKomi/20.0f;
 
-  //Ko rule
-  if(hist.rules.koRule == Rules::KO_POSITIONAL) {
-    rowGlobal[6] = 1.0f;
-    rowGlobal[7] = 0.5f;
-  }
-  else if(hist.rules.koRule == Rules::KO_SITUATIONAL) {
-    rowGlobal[6] = 1.0f;
-    rowGlobal[7] = -0.5f;
-  }
-  else
-    ASSERT_UNREACHABLE;
-
   //Suicide
   if(hist.rules.multiStoneSuicideLegal)
     rowGlobal[8] = 1.0f;

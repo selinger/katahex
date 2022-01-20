@@ -606,7 +606,6 @@ void Sgf::iterAllUniquePositions(
   if(nextPla == C_EMPTY)
     nextPla = C_BLACK;
   Rules rules = Rules::getTrompTaylorish();
-  rules.koRule = Rules::KO_SITUATIONAL;
   rules.multiStoneSuicideLegal = true;
   BoardHistory hist(board,nextPla,rules);
 

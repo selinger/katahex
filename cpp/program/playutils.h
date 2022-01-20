@@ -153,15 +153,6 @@ namespace PlayUtils {
     const AsyncBot* bot
   );
 
-  Loc maybeFriendlyPass(
-    enabled_t cleanupBeforePass,
-    enabled_t friendlyPass,
-    const Player pla,
-    Loc moveLoc,
-    Search* bot,
-    int64_t numVisits
-  );
-
 }
 
 

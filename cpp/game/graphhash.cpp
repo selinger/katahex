@@ -4,19 +4,15 @@ Hash128 GraphHash::getStateHash(const BoardHistory& hist, Player nextPlayer, dou
   const Board& board = hist.getRecentBoard(0);
   Hash128 hash = BoardHistory::getSituationRulesAndKoHash(board, hist, nextPlayer, drawEquivalentWinsForWhite);
 
-  // Fold in whether a pass ends this phase
-  bool passEndsGame = hist.passWouldEndGame(board,nextPlayer);
-  if(passEndsGame)
-    hash ^= Board::ZOBRIST_PASS_ENDS_GAME;
   // Fold in whether the game is over or not
   if(hist.isGameFinished)
     hash ^= Board::ZOBRIST_GAME_IS_OVER;
 
   // Fold in consecutive pass count. Probably usually redundant with history tracking. Use some standard LCG constants.
-  static constexpr uint64_t CONSECPASS_MULT0 = 2862933555777941757ULL;
-  static constexpr uint64_t CONSECPASS_MULT1 = 3202034522624059733ULL;
-  hash.hash0 += CONSECPASS_MULT0 * (uint64_t)hist.consecutiveEndingPasses;
-  hash.hash1 += CONSECPASS_MULT1 * (uint64_t)hist.consecutiveEndingPasses;
+  //static constexpr uint64_t CONSECPASS_MULT0 = 2862933555777941757ULL;
+  //static constexpr uint64_t CONSECPASS_MULT1 = 3202034522624059733ULL;
+  //hash.hash0 += CONSECPASS_MULT0 * (uint64_t)hist.consecutiveEndingPasses;
+  //hash.hash1 += CONSECPASS_MULT1 * (uint64_t)hist.consecutiveEndingPasses;
   return hash;
 }
 
