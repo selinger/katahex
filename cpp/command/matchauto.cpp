@@ -413,7 +413,7 @@ namespace {
 
 int MainCmds::matchauto(const vector<string>& args) {
   Board::initHash();
-  ScoreValue::initTables();
+   
   Rand seedRand;
 
   ConfigParser cfg;
@@ -617,7 +617,7 @@ int MainCmds::matchauto(const vector<string>& args) {
   delete manager;
 
   NeuralNet::globalCleanup();
-  ScoreValue::freeTables();
+   
 
   if(sigReceived.load())
     logger.write("Exited cleanly after signal");

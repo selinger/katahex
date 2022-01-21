@@ -25,8 +25,10 @@ Hash128 Board::ZOBRIST_PLAYER_HASH[4];
 Hash128 Board::ZOBRIST_KO_LOC_HASH[MAX_ARR_SIZE];
 Hash128 Board::ZOBRIST_KO_MARK_HASH[MAX_ARR_SIZE][4];
 Hash128 Board::ZOBRIST_BOARD_HASH2[MAX_ARR_SIZE][4];
-const Hash128 Board::ZOBRIST_PASS_ENDS_GAME = //Based on sha256 hash of Board::ZOBRIST_PASS_ENDS_PHASE
-  Hash128(0x853E097C279EBF4EULL, 0xE3153DEF9E14A62CULL);
+Hash128 Board::ZOBRIST_CAPTURE_B_HASH[2*MAX_ARR_SIZE];
+Hash128 Board::ZOBRIST_CAPTURE_W_HASH[2*MAX_ARR_SIZE];
+Hash128 Board::ZOBRIST_PASSNUM_B_HASH[2*MAX_ARR_SIZE];
+Hash128 Board::ZOBRIST_PASSNUM_W_HASH[2*MAX_ARR_SIZE];
 const Hash128 Board::ZOBRIST_GAME_IS_OVER = //Based on sha256 hash of Board::ZOBRIST_GAME_IS_OVER
   Hash128(0xb6f9e465597a77eeULL, 0xf1d583d960a4ce7fULL);
 
@@ -123,6 +125,8 @@ Board::Board(const Board& other)
   pos_hash = other.pos_hash;
   numBlackCaptures = other.numBlackCaptures;
   numWhiteCaptures = other.numWhiteCaptures;
+  numBlackPasses = other.numBlackPasses;
+  numWhitePasses = other.numWhitePasses;
 
   memcpy(adj_offsets, other.adj_offsets, sizeof(short)*8);
 }
@@ -153,6 +157,8 @@ void Board::init(int xS, int yS)
   pos_hash = ZOBRIST_SIZE_X_HASH[x_size] ^ ZOBRIST_SIZE_Y_HASH[y_size];
   numBlackCaptures = 0;
   numWhiteCaptures = 0;
+  numBlackPasses = 0;
+  numWhitePasses = 0;
 
   Location::getAdjacentOffsets(adj_offsets,x_size);
 }
@@ -187,6 +193,18 @@ void Board::initHash()
     }
     ZOBRIST_KO_LOC_HASH[i] = nextHash();
   }
+
+  for(int i=0;i<2*MAX_ARR_SIZE;i++)
+  {
+    ZOBRIST_CAPTURE_B_HASH[i]=nextHash();
+    ZOBRIST_CAPTURE_W_HASH[i]=nextHash();
+    ZOBRIST_PASSNUM_B_HASH[i]=nextHash();
+    ZOBRIST_PASSNUM_W_HASH[i]=nextHash();
+  }
+  ZOBRIST_CAPTURE_B_HASH[0]=Hash128();
+  ZOBRIST_CAPTURE_W_HASH[0]=Hash128();
+  ZOBRIST_PASSNUM_B_HASH[0]=Hash128();
+  ZOBRIST_PASSNUM_W_HASH[0]=Hash128();
 
 
   //Reseed the random number generator so that these size hashes are also
@@ -722,8 +740,12 @@ void Board::undo(Board::MoveRecord record)
   ko_loc = record.ko_loc;
 
   Loc loc = record.loc;
-  if(loc == PASS_LOC)
+  if (loc == PASS_LOC)
+  {
+    if (record.pla == P_BLACK)setBlackPasses(numBlackPasses - 1);
+    else if (record.pla == P_WHITE)setWhitePasses(numWhitePasses - 1);
     return;
+  }
 
   //Re-fill stones in all captured directions
   for(int i = 0; i<4; i++)
@@ -736,9 +758,9 @@ void Board::undo(Board::MoveRecord record)
 
         int numUncaptured = chain_data[chain_head[adj]].num_locs;
         if(record.pla == P_BLACK)
-          numWhiteCaptures -= numUncaptured;
+          setWhiteCaptures(numWhiteCaptures - numUncaptured);
         else
-          numBlackCaptures -= numUncaptured;
+          setBlackCaptures(numBlackCaptures - numUncaptured);
       }
     }
   }
@@ -748,9 +770,9 @@ void Board::undo(Board::MoveRecord record)
     addChain(loc,record.pla);
     int numUncaptured = chain_data[chain_head[loc]].num_locs;
     if(record.pla == P_BLACK)
-      numBlackCaptures -= numUncaptured;
+      setBlackCaptures(numBlackCaptures - numUncaptured);
     else
-      numWhiteCaptures -= numUncaptured;
+      setWhiteCaptures(numWhiteCaptures - numUncaptured);
   }
 
   //Delete the stone played here.
@@ -924,6 +946,8 @@ void Board::playMoveAssumeLegal(Loc loc, Player pla)
   if(loc == PASS_LOC)
   {
     ko_loc = NULL_LOC;
+    if (pla == P_BLACK)setBlackPasses(numBlackPasses + 1);
+    else if (pla == P_WHITE)setWhitePasses(numWhitePasses + 1);
     return;
   }
 
@@ -996,9 +1020,9 @@ void Board::playMoveAssumeLegal(Loc loc, Player pla)
     ko_loc = NULL_LOC;
 
   if(pla == P_BLACK)
-    numWhiteCaptures += num_captured;
+    setWhiteCaptures(numWhiteCaptures + num_captured);
   else
-    numBlackCaptures += num_captured;
+    setBlackCaptures(numBlackCaptures + num_captured);
 
   //Handle suicide
   if(getNumLiberties(loc) == 0) {
@@ -1006,9 +1030,9 @@ void Board::playMoveAssumeLegal(Loc loc, Player pla)
     removeChain(loc);
 
     if(pla == P_BLACK)
-      numBlackCaptures += numSuicided;
+      setBlackCaptures(numBlackCaptures + numSuicided);
     else
-      numWhiteCaptures += numSuicided;
+      setWhiteCaptures(numWhiteCaptures + numSuicided);
   }
 }
 
@@ -1804,7 +1828,10 @@ void Board::checkConsistency() const {
         throw StringError(errLabel + "Non-(black,white,empty) value within board legal area");
     }
   }
-
+  tmp_pos_hash ^= ZOBRIST_CAPTURE_B_HASH[numBlackCaptures];
+  tmp_pos_hash ^= ZOBRIST_CAPTURE_W_HASH[numWhiteCaptures];
+  tmp_pos_hash ^= ZOBRIST_PASSNUM_B_HASH[numBlackPasses];
+  tmp_pos_hash ^= ZOBRIST_PASSNUM_W_HASH[numWhitePasses];
   if(pos_hash != tmp_pos_hash)
     throw StringError(errLabel + "Pos hash does not match expected");
 
@@ -1845,9 +1872,13 @@ bool Board::isEqualForTesting(const Board& other, bool checkNumCaptures, bool ch
     return false;
   if(checkSimpleKo && ko_loc != other.ko_loc)
     return false;
-  if(checkNumCaptures && numBlackCaptures != other.numBlackCaptures)
+  if(numBlackCaptures != other.numBlackCaptures)
     return false;
-  if(checkNumCaptures && numWhiteCaptures != other.numWhiteCaptures)
+  if(numWhiteCaptures != other.numWhiteCaptures)
+    return false;
+  if(numBlackPasses != other.numBlackPasses)
+    return false;
+  if(numWhitePasses != other.numWhitePasses)
     return false;
   if(pos_hash != other.pos_hash)
     return false;
@@ -2204,6 +2235,8 @@ nlohmann::json Board::toJson(const Board& board) {
   data["koLoc"] = Location::toString(board.ko_loc,board);
   data["numBlackCaptures"] = board.numBlackCaptures;
   data["numWhiteCaptures"] = board.numWhiteCaptures;
+  data["numBlackPasses"] = board.numBlackPasses;
+  data["numWhitePasses"] = board.numWhitePasses;
   return data;
 }
 
@@ -2212,11 +2245,40 @@ Board Board::ofJson(const nlohmann::json& data) {
   int ySize = data["ySize"].get<int>();
   Board board = Board::parseBoard(xSize,ySize,data["stones"].get<string>(),'|');
   board.setSimpleKoLoc(Location::ofStringAllowNull(data["koLoc"].get<string>(),board));
-  board.numBlackCaptures = data["numBlackCaptures"].get<int>();
-  board.numWhiteCaptures = data["numWhiteCaptures"].get<int>();
+  board.setBlackCaptures ( data["numBlackCaptures"].get<int>());
+  board.setWhiteCaptures ( data["numWhiteCaptures"].get<int>());
+  board.setBlackPasses ( data["numBlackPasses"].get<int>());
+  board.setWhitePasses ( data["numWhitePasses"].get<int>());
   return board;
 }
 
+void Board::setBlackCaptures(int x)
+{
+  pos_hash ^= ZOBRIST_CAPTURE_B_HASH[numBlackCaptures];
+  numBlackCaptures = x;
+  pos_hash ^= ZOBRIST_CAPTURE_B_HASH[numBlackCaptures];
+}
+
+void Board::setWhiteCaptures(int x)
+{
+  pos_hash ^= ZOBRIST_CAPTURE_W_HASH[numWhiteCaptures];
+  numWhiteCaptures = x;
+  pos_hash ^= ZOBRIST_CAPTURE_W_HASH[numWhiteCaptures];
+}
+
+void Board::setBlackPasses(int x)
+{
+  pos_hash ^= ZOBRIST_PASSNUM_B_HASH[numBlackPasses];
+  numBlackPasses = x;
+  pos_hash ^= ZOBRIST_PASSNUM_B_HASH[numBlackPasses];
+}
+
+void Board::setWhitePasses(int x)
+{
+  pos_hash ^= ZOBRIST_PASSNUM_W_HASH[numWhitePasses];
+  numWhitePasses = x;
+  pos_hash ^= ZOBRIST_PASSNUM_W_HASH[numWhitePasses];
+}
 
 bool Board::isAdjacentToPlaHead(Player pla, Loc loc, Loc plaHead) const {
   FOREACHADJ(

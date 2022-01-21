@@ -50,6 +50,15 @@ namespace PlayUtils {
 
   float roundAndClipKomi(double unrounded, const Board& board, bool looseClipping);
 
+
+  double getSearchFactor(
+    double searchFactorWhenWinningThreshold,
+    double searchFactorWhenWinning,
+    const SearchParams& params,
+    const std::vector<double>& recentWinLossValues,
+    Player pla
+  );
+
   void adjustKomiToEven(
     Search* botB,
     Search* botW, //can be NULL if only one bot
@@ -61,25 +70,6 @@ namespace PlayUtils {
     Rand& rand
   );
 
-  //Lead from WHITE's perspective
-  float computeLead(
-    Search* botB,
-    Search* botW, //can be NULL if only one bot
-    const Board& board,
-    BoardHistory& hist,
-    Player pla,
-    int64_t numVisits,
-    const OtherGameProperties& otherGameProps
-  );
-
-  double getSearchFactor(
-    double searchFactorWhenWinningThreshold,
-    double searchFactorWhenWinning,
-    const SearchParams& params,
-    const std::vector<double>& recentWinLossValues,
-    Player pla
-  );
-
   double getHackedLCBForWinrate(const Search* search, const AnalysisData& data, Player pla);
 
   std::vector<double> computeOwnership(
@@ -88,26 +78,6 @@ namespace PlayUtils {
     const BoardHistory& hist,
     Player pla,
     int64_t numVisits
-  );
-
-  //Determine all living and dead stones, if the game were terminated right now and
-  //the rules were interpreted naively and directly.
-  //Returns a vector indexed by board Loc (length Board::MAX_ARR_SIZE).
-  std::vector<bool> computeAnticipatedStatusesSimple(
-    const Board& board,
-    const BoardHistory& hist
-  );
-
-  //Determine all living and dead stones, trying to be clever and use the ownership prediction
-  //of the neural net.
-  //Returns a vector indexed by board Loc (length Board::MAX_ARR_SIZE).
-  std::vector<bool> computeAnticipatedStatusesWithOwnership(
-    Search* bot,
-    const Board& board,
-    const BoardHistory& hist,
-    Player pla,
-    int64_t numVisits,
-    std::vector<double>& ownershipsBuf
   );
 
 
@@ -145,13 +115,6 @@ namespace PlayUtils {
 
   Rules genRandomRules(Rand& rand);
 
-  Loc maybeCleanupBeforePass(
-    enabled_t cleanupBeforePass,
-    enabled_t friendlyPass,
-    const Player pla,
-    Loc moveLoc,
-    const AsyncBot* bot
-  );
 
 }
 

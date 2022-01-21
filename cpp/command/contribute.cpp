@@ -344,7 +344,7 @@ static void runAndUploadSingleGame(
 
 int MainCmds::contribute(const vector<string>& args) {
   Board::initHash();
-  ScoreValue::initTables();
+   
   Rand seedRand;
 
   string baseDir;
@@ -1144,7 +1144,7 @@ int MainCmds::contribute(const vector<string>& args) {
   //Delete and clean up everything else
   NeuralNet::globalCleanup();
   delete forkData;
-  ScoreValue::freeTables();
+   
   delete userCfg;
 
   if(sigReceived.load())

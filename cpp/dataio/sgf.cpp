@@ -606,7 +606,6 @@ void Sgf::iterAllUniquePositions(
   if(nextPla == C_EMPTY)
     nextPla = C_BLACK;
   Rules rules = Rules::getTrompTaylorish();
-  rules.multiStoneSuicideLegal = true;
   BoardHistory hist(board,nextPla,rules);
 
   PositionSample sampleBuf;
@@ -787,10 +786,6 @@ void Sgf::samplePositionIfUniqueHelper(
   sampleBuf.hintLoc = Board::NULL_LOC;
   sampleBuf.weight = 1.0;
 
-  if(flipIfPassOrWFirst) {
-    if(hist.hasBlackPassOrWhiteFirst())
-      sampleBuf = sampleBuf.getColorFlipped();
-  }
 
   f(sampleBuf,hist,comments);
 }
@@ -1390,7 +1385,7 @@ void CompactSgf::playMovesAssumeLegal(Board& board, Player& nextPla, BoardHistor
     );
 
   for(int64_t i = 0; i<turnIdx; i++) {
-    hist.makeBoardMoveAssumeLegal(board,moves[i].loc,moves[i].pla,NULL);
+    hist.makeBoardMoveAssumeLegal(board,moves[i].loc,moves[i].pla);
     nextPla = getOpp(moves[i].pla);
   }
 }
@@ -1634,7 +1629,7 @@ void WriteSgf::writeSgf(
     if(comment.length() > 0)
       out << "C[" << comment << "]";
 
-    hist.makeBoardMoveAssumeLegal(board,loc,pla,NULL);
+    hist.makeBoardMoveAssumeLegal(board,loc,pla);
 
   }
   out << ")";

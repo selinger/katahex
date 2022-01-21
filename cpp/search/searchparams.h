@@ -77,7 +77,6 @@ struct SearchParams {
   //Mild behavior hackery
   double rootEndingBonusPoints; //Extra bonus (or penalty) to encourage good passing behavior at the end of the game.
   bool rootPruneUselessMoves; //Prune moves that are entirely useless moves that prolong the game.
-  bool conservativePass; //Never assume one's own pass will end the game.
   double wideRootNoise; //Explore at the root more widely
 
   double playoutDoublingAdvantage; //Play as if we have this many doublings of playouts vs the opponent

@@ -40,7 +40,7 @@ static double getMaxPolicy(float policyProbs[NNPos::MAX_NN_POLICY_SIZE]) {
 
 int MainCmds::genbook(const vector<string>& args) {
   Board::initHash();
-  ScoreValue::initTables();
+   
 
   ConfigParser cfg;
   string modelFile;
@@ -978,7 +978,7 @@ int MainCmds::genbook(const vector<string>& args) {
   delete nnEval;
   delete book;
   delete traceBook;
-  ScoreValue::freeTables();
+   
   logger.write("DONE");
   return 0;
 }

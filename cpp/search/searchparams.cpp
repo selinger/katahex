@@ -57,7 +57,6 @@ SearchParams::SearchParams()
    useNonBuggyLcb(false),
    rootEndingBonusPoints(0.0),
    rootPruneUselessMoves(false),
-   conservativePass(false),
    wideRootNoise(0.0),
    playoutDoublingAdvantage(0.0),
    playoutDoublingAdvantagePla(C_EMPTY),
@@ -110,7 +109,6 @@ SearchParams SearchParams::forTestsV1() {
   params.minVisitPropForLCB = 0.15;
   params.rootEndingBonusPoints = 0.5;
   params.rootPruneUselessMoves = true;
-  params.conservativePass = true;
   params.useNonBuggyLcb = true;
   return params;
 }

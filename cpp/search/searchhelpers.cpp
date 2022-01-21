@@ -216,29 +216,18 @@ double Search::getScoreUtility(double scoreMeanAvg, double scoreMeanSqAvg) const
   double scoreMean = scoreMeanAvg;
   double scoreMeanSq = scoreMeanSqAvg;
   double scoreStdev = ScoreValue::getScoreStdev(scoreMean, scoreMeanSq);
-  double staticScoreValue = ScoreValue::expectedWhiteScoreValue(scoreMean,scoreStdev,0.0,2.0,rootBoard);
-  double dynamicScoreValue = ScoreValue::expectedWhiteScoreValue(scoreMean,scoreStdev,recentScoreCenter,searchParams.dynamicScoreCenterScale,rootBoard);
-  return staticScoreValue * searchParams.staticScoreUtilityFactor + dynamicScoreValue * searchParams.dynamicScoreUtilityFactor;
+  double dynamicScoreValue = scoreMean/(scoreStdev+1);
+
+  return scoreMean * searchParams.staticScoreUtilityFactor + dynamicScoreValue * searchParams.dynamicScoreUtilityFactor;
 }
 
 double Search::getScoreUtilityDiff(double scoreMeanAvg, double scoreMeanSqAvg, double delta) const {
-  double scoreMean = scoreMeanAvg;
-  double scoreMeanSq = scoreMeanSqAvg;
-  double scoreStdev = ScoreValue::getScoreStdev(scoreMean, scoreMeanSq);
-  double staticScoreValueDiff =
-    ScoreValue::expectedWhiteScoreValue(scoreMean + delta,scoreStdev,0.0,2.0,rootBoard)
-    -ScoreValue::expectedWhiteScoreValue(scoreMean,scoreStdev,0.0,2.0,rootBoard);
-  double dynamicScoreValueDiff =
-    ScoreValue::expectedWhiteScoreValue(scoreMean + delta,scoreStdev,recentScoreCenter,searchParams.dynamicScoreCenterScale,rootBoard)
-    -ScoreValue::expectedWhiteScoreValue(scoreMean,scoreStdev,recentScoreCenter,searchParams.dynamicScoreCenterScale,rootBoard);
-  return staticScoreValueDiff * searchParams.staticScoreUtilityFactor + dynamicScoreValueDiff * searchParams.dynamicScoreUtilityFactor;
+  return getScoreUtility(scoreMeanAvg+delta, scoreMeanSqAvg) - getScoreUtility(scoreMeanAvg, scoreMeanSqAvg);
 }
 
 //Ignores scoreMeanSq's effect on the utility, since that's complicated
 double Search::getApproxScoreUtilityDerivative(double scoreMean) const {
-  double staticScoreValueDerivative = ScoreValue::whiteDScoreValueDScoreSmoothNoDrawAdjust(scoreMean,0.0,2.0,rootBoard);
-  double dynamicScoreValueDerivative = ScoreValue::whiteDScoreValueDScoreSmoothNoDrawAdjust(scoreMean,recentScoreCenter,searchParams.dynamicScoreCenterScale,rootBoard);
-  return staticScoreValueDerivative * searchParams.staticScoreUtilityFactor + dynamicScoreValueDerivative * searchParams.dynamicScoreUtilityFactor;
+ return searchParams.staticScoreUtilityFactor;
 }
 
 
@@ -254,52 +243,6 @@ double Search::getPatternBonus(Hash128 patternBonusHash, Player prevMovePla) con
   return patternBonusTable->get(patternBonusHash).utilityBonus;
 }
 
-
-double Search::getEndingWhiteScoreBonus(const SearchNode& parent, Loc moveLoc) const {
-  if(&parent != rootNode || moveLoc == Board::NULL_LOC)
-    return 0.0;
-
-  const NNOutput* nnOutput = parent.getNNOutput();
-  if(nnOutput == NULL || nnOutput->whiteOwnerMap == NULL)
-    return 0.0;
-
-  assert(nnOutput->nnXLen == nnXLen);
-  assert(nnOutput->nnYLen == nnYLen);
-  float* whiteOwnerMap = nnOutput->whiteOwnerMap;
-
-  const double extreme = 0.95;
-  const double tail = 0.05;
-
-  //Extra points from the perspective of the root player
-  double extraRootPoints = 0.0;
-    //Areaish scoring - in an effort to keep the game short and slightly discourage pointless territory filling at the end
-    //discourage any move that, except in case of ko, is either:
-    // * On a spot that the opponent almost surely owns
-    // * On a spot that the player almost surely owns and it is not adjacent to opponent stones and is not a connection of non-pass-alive groups.
-    //These conditions should still make it so that "cleanup" and dame-filling moves are not discouraged.
-    // * When playing button go, very slightly discourage passing - so that if there are an even number of dame, filling a dame is still favored over passing.
-    if(moveLoc != Board::PASS_LOC && rootBoard.ko_loc == Board::NULL_LOC) {
-      int pos = NNPos::locToPos(moveLoc,rootBoard.x_size,nnXLen,nnYLen);
-      double plaOwnership = rootPla == P_WHITE ? whiteOwnerMap[pos] : -whiteOwnerMap[pos];
-      if(plaOwnership <= -extreme)
-        extraRootPoints -= searchParams.rootEndingBonusPoints * ((-extreme - plaOwnership) / tail);
-      else if(plaOwnership >= extreme) {
-        if(!rootBoard.isAdjacentToPla(moveLoc,getOpp(rootPla)) &&
-           !rootBoard.isNonPassAliveSelfConnection(moveLoc,rootPla,rootSafeArea)) {
-          extraRootPoints -= searchParams.rootEndingBonusPoints * ((plaOwnership - extreme) / tail);
-        }
-      }
-    }
-    if(moveLoc == Board::PASS_LOC && rootHistory.hasButton) {
-      extraRootPoints -= searchParams.rootEndingBonusPoints * 0.5;
-    }
- 
-
-  if(rootPla == P_WHITE)
-    return extraRootPoints;
-  else
-    return -extraRootPoints;
-}
 
 double Search::interpolateEarly(double halflife, double earlyValue, double value) const {
   double rawHalflives = (rootHistory.initialTurnNumber + rootHistory.moveHistory.size()) / halflife;
@@ -345,8 +288,7 @@ void Search::getSelfUtilityLCBAndRadius(const SearchNode& parent, const SearchNo
     return;
 
   double utilityNoBonus = utilityAvg;
-  double endingScoreBonus = getEndingWhiteScoreBonus(parent,moveLoc);
-  double utilityDiff = getScoreUtilityDiff(scoreMeanAvg, scoreMeanSqAvg, endingScoreBonus);
+  double utilityDiff = getScoreUtilityDiff(scoreMeanAvg, scoreMeanSqAvg,0);
   double utilityWithBonus = utilityNoBonus + utilityDiff;
   double selfUtility = parent.nextPla == P_WHITE ? utilityWithBonus : -utilityWithBonus;
 

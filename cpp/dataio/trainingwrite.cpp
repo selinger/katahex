@@ -509,9 +509,7 @@ void TrainingWriteBuffers::addRow(
   {
     //Possibly this should count whiteHandicapBonusScore too, but in selfplay this never changes
     //after the start of a game
-    float whiteBonusPoints = data.endHist.whiteBonusScore - hist.whiteBonusScore;
-    float selfBonusPoints = (nextPlayer == P_WHITE ? whiteBonusPoints : -whiteBonusPoints);
-    rowGlobal[61] = selfBonusPoints != 0 ? selfBonusPoints : 0.0f; //Conditional avoids negative zero
+    rowGlobal[61] =  0.0f; //Conditional avoids negative zero
   }
 
   //Unused
@@ -885,7 +883,7 @@ void TrainingDataWriter::writeGame(const FinishedGameData& data) {
       Move move = data.endHist.moveHistory[turnIdx];
       assert(move.pla == nextPlayer);
       assert(hist.isLegal(board,move.loc,move.pla));
-      hist.makeBoardMoveAssumeLegal(board, move.loc, move.pla, NULL);
+      hist.makeBoardMoveAssumeLegal(board, move.loc, move.pla);
       nextPlayer = getOpp(nextPlayer);
 
       posHistForFutureBoards.push_back(board);
@@ -949,7 +947,7 @@ void TrainingDataWriter::writeGame(const FinishedGameData& data) {
     Move move = data.endHist.moveHistory[turnIdx];
     assert(move.pla == nextPlayer);
     assert(hist.isLegal(board,move.loc,move.pla));
-    hist.makeBoardMoveAssumeLegal(board, move.loc, move.pla, NULL);
+    hist.makeBoardMoveAssumeLegal(board, move.loc, move.pla);
     nextPlayer = getOpp(nextPlayer);
   }
 

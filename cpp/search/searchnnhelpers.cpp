@@ -14,7 +14,6 @@ void Search::computeRootNNEvaluation(NNResultBuf& nnResultBuf, bool includeOwner
   // bool isRoot = true;
   MiscNNInputParams nnInputParams;
   nnInputParams.drawEquivalentWinsForWhite = searchParams.drawEquivalentWinsForWhite;
-  nnInputParams.conservativePass = searchParams.conservativePass;
   nnInputParams.nnPolicyTemperature = searchParams.nnPolicyTemperature;
   if(searchParams.playoutDoublingAdvantage != 0) {
     Player playoutDoublingAdvantagePla = getPlayoutDoublingAdvantagePla();
@@ -48,7 +47,6 @@ bool Search::initNodeNNOutput(
   }
   MiscNNInputParams nnInputParams;
   nnInputParams.drawEquivalentWinsForWhite = searchParams.drawEquivalentWinsForWhite;
-  nnInputParams.conservativePass = searchParams.conservativePass;
   nnInputParams.nnPolicyTemperature = searchParams.nnPolicyTemperature;
   if(searchParams.playoutDoublingAdvantage != 0) {
     Player playoutDoublingAdvantagePla = getPlayoutDoublingAdvantagePla();
@@ -142,8 +140,7 @@ void Search::maybeRecomputeExistingNNOutput(
       //Recompute if we have no ownership map, since we need it for getEndingWhiteScoreBonus
       //If conservative passing, then we may also need to recompute the root policy ignoring the history if a pass ends the game
       //If averaging a bunch of symmetries, then we need to recompute it too
-      if(nnOutput->whiteOwnerMap == NULL ||
-         (searchParams.conservativePass && thread.history.passWouldEndGame(thread.board,thread.pla)) ||
+      if(nnOutput->whiteOwnerMap == NULL||
          searchParams.rootNumSymmetriesToSample > 1
       ) {
         initNodeNNOutput(thread,node,isRoot,false,true);

@@ -109,10 +109,6 @@ double Search::getExploreSelectionValueOfChild(
   else {
     childUtility = utilityAvg;
 
-    //Tiny adjustment for passing
-    double endingScoreBonus = getEndingWhiteScoreBonus(parent,moveLoc);
-    if(endingScoreBonus != 0)
-      childUtility += getScoreUtilityDiff(scoreMeanAvg, scoreMeanSqAvg, endingScoreBonus);
   }
 
   //When multithreading, totalChildWeight could be out of sync with childWeight, so if they provably are, then fix that up
@@ -222,11 +218,7 @@ double Search::getReducedPlaySelectionWeight(
   if(childVisits <= 0 || childWeight <= 0.0)
     return 0;
 
-  //Tiny adjustment for passing
-  double endingScoreBonus = getEndingWhiteScoreBonus(parent,moveLoc);
   double childUtility = utilityAvg;
-  if(endingScoreBonus != 0)
-    childUtility += getScoreUtilityDiff(scoreMeanAvg, scoreMeanSqAvg, endingScoreBonus);
 
   double childWeightWeRetrospectivelyWanted = getExploreSelectionValueInverse(
     bestChildExploreSelectionValue, nnPolicyProb, totalChildWeight, childUtility, parentUtilityStdevFactor, parent.nextPla
@@ -419,6 +411,7 @@ void Search::selectBestChildToDescend(
     }
   }
   if(bestNewMoveLoc != Board::NULL_LOC) {
+    if (!thread.board.isLegal(bestNewMoveLoc, node.nextPla, false))std::cout << "illegal select move";
     double selectionValue = getNewExploreSelectionValue(
       node,bestNewNNPolicyProb,totalChildWeight,fpuValue,
       parentWeightPerVisit,parentUtilityStdevFactor,

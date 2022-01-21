@@ -89,25 +89,13 @@ GameInitializer::GameInitializer(ConfigParser& cfg, Logger& logger, const string
 
 void GameInitializer::initShared(ConfigParser& cfg, Logger& logger) {
 
-  allowedKoRuleStrs = cfg.getStrings("koRules", Rules::koRuleStrings());
   allowedTaxRuleStrs = cfg.getStrings("taxRules", Rules::taxRuleStrings());
-  allowedMultiStoneSuicideLegals = cfg.getBools("multiStoneSuicideLegals");
-  allowedButtons = cfg.getBools("hasButtons");
 
-  for(size_t i = 0; i < allowedKoRuleStrs.size(); i++)
-    allowedKoRules.push_back(Rules::parseKoRule(allowedKoRuleStrs[i]));
   for(size_t i = 0; i < allowedTaxRuleStrs.size(); i++)
     allowedTaxRules.push_back(Rules::parseTaxRule(allowedTaxRuleStrs[i]));
 
-  if(allowedKoRules.size() <= 0)
-    throw IOError("koRules must have at least one value in " + cfg.getFileName());
   if(allowedTaxRules.size() <= 0)
     throw IOError("taxRules must have at least one value in " + cfg.getFileName());
-  if(allowedMultiStoneSuicideLegals.size() <= 0)
-    throw IOError("multiStoneSuicideLegals must have at least one value in " + cfg.getFileName());
-  if(allowedButtons.size() <= 0)
-    throw IOError("hasButtons must have at least one value in " + cfg.getFileName());
-
 
   allowedBSizes = cfg.getInts("bSizes", 2, Board::MAX_LEN);
   allowedBSizeRelProbs = cfg.getDoubles("bSizeRelProbs",0.0,1e100);
@@ -348,7 +336,6 @@ void GameInitializer::createGame(
 Rules GameInitializer::randomizeTaxRules(Rules rules, Rand& randToUse) const {
   rules.taxRule = allowedTaxRules[randToUse.nextUInt(allowedTaxRules.size())];
 
-    rules.hasButton = allowedButtons[randToUse.nextUInt(allowedButtons.size())];
 
   return rules;
 }
@@ -386,11 +373,7 @@ Rules GameInitializer::createRules() {
 
 Rules GameInitializer::createRulesUnsynchronized() {
   Rules rules;
-  rules.koRule = allowedKoRules[rand.nextUInt(allowedKoRules.size())];
   rules.taxRule = allowedTaxRules[rand.nextUInt(allowedTaxRules.size())];
-  rules.multiStoneSuicideLegal = allowedMultiStoneSuicideLegals[rand.nextUInt(allowedMultiStoneSuicideLegals.size())];
-
-    rules.hasButton = allowedButtons[rand.nextUInt(allowedButtons.size())];
   return rules;
 }
 
@@ -411,7 +394,6 @@ void GameInitializer::createGameSharedUnsynchronized(
       hist.rules.komi, komiStdev, komiAllowIntegerProb,
       komiBigStdevProb, komiBigStdev, sqrt(board.x_size*board.y_size), rand
     );
-    assert(extraBlackAndKomi.extraBlack == 0);
     PlayUtils::setKomiWithNoise(extraBlackAndKomi, hist, rand);
     otherGameProps.isSgfPos = false;
     otherGameProps.isHintPos = false;
@@ -467,7 +449,7 @@ void GameInitializer::createGameSharedUnsynchronized(
         hintLoc = Board::NULL_LOC;
         break;
       }
-      hist.makeBoardMoveAssumeLegal(board,startPos.moves[i].loc,startPos.moves[i].pla,NULL);
+      hist.makeBoardMoveAssumeLegal(board,startPos.moves[i].loc,startPos.moves[i].pla);
       pla = getOpp(startPos.moves[i].pla);
     }
 
@@ -923,7 +905,7 @@ static void recordTreePositionsRec(
     if(hist.isLegal(board, moveLoc, pla)) {
       Board copy = board;
       BoardHistory histCopy = hist;
-      histCopy.makeBoardMoveAssumeLegal(copy, moveLoc, pla, NULL);
+      histCopy.makeBoardMoveAssumeLegal(copy, moveLoc, pla);
       Player nextPla = getOpp(pla);
       recordTreePositionsRec(
         gameData,
@@ -1394,8 +1376,6 @@ FinishedGameData* Play::runGame(
 
   //Main play loop
   for(int i = 0; i<maxMovesPerGame; i++) {
-    if(doEndGameIfAllPassAlive)
-      hist.endGameIfAllPassAlive(board);
     if(hist.isGameFinished)
       break;
     if(shouldStop != nullptr && shouldStop())
@@ -1462,7 +1442,7 @@ FinishedGameData* Play::runGame(
         sidePositionForkLoc = chooseRandomForkingMove(nnOutput, board, hist, pla, gameRand, banMove);
         if(sidePositionForkLoc != Board::NULL_LOC) {
           SidePosition* sp = new SidePosition(board,hist,pla,gameData->changedNeuralNets.size());
-          sp->hist.makeBoardMoveAssumeLegal(sp->board,sidePositionForkLoc,sp->pla,NULL);
+          sp->hist.makeBoardMoveAssumeLegal(sp->board,sidePositionForkLoc,sp->pla);
           sp->pla = getOpp(sp->pla);
           if(sp->hist.isGameFinished) delete sp;
           else sidePositionsToSearch.push_back(sp);
@@ -1508,7 +1488,7 @@ FinishedGameData* Play::runGame(
 
     //And make the move on our copy of the board
     assert(hist.isLegal(board,loc,pla));
-    hist.makeBoardMoveAssumeLegal(board,loc,pla,NULL);
+    hist.makeBoardMoveAssumeLegal(board,loc,pla);
 
     //Check for resignation
     if(playSettings.allowResignation && historicalMctsWinLossValues.size() >= playSettings.resignConsecTurns) {
@@ -1564,7 +1544,11 @@ FinishedGameData* Play::runGame(
     gameData->finalOwnership = new Color[Board::MAX_ARR_SIZE];
     gameData->finalSekiAreas = new bool[Board::MAX_ARR_SIZE];
 
-    if(hist.isGameFinished && hist.isNoResult) {
+    std::fill(gameData->finalFullArea,gameData->finalFullArea+Board::MAX_ARR_SIZE,C_EMPTY);
+    std::fill(gameData->finalOwnership,gameData->finalOwnership+Board::MAX_ARR_SIZE,C_EMPTY);
+    std::fill(gameData->finalSekiAreas,gameData->finalSekiAreas+Board::MAX_ARR_SIZE,false);
+
+    if (hist.isGameFinished &&( hist.isNoResult)) {
       finalValueTargets.win = 0.0f;
       finalValueTargets.loss = 0.0f;
       finalValueTargets.noResult = 1.0f;
@@ -1572,38 +1556,17 @@ FinishedGameData* Play::runGame(
 
       //Fill with empty so that we use "nobody owns anything" as the training target.
       //Although in practice actually the training normally weights by having a result or not, so it doesn't matter what we fill.
-      std::fill(gameData->finalFullArea,gameData->finalFullArea+Board::MAX_ARR_SIZE,C_EMPTY);
-      std::fill(gameData->finalOwnership,gameData->finalOwnership+Board::MAX_ARR_SIZE,C_EMPTY);
-      std::fill(gameData->finalSekiAreas,gameData->finalSekiAreas+Board::MAX_ARR_SIZE,false);
     }
-    else {
-      //Relying on this to be idempotent, so that we can get the final territory map
-      //We also do want to call this here to force-end the game if we crossed a move limit.
-      hist.endAndScoreGameNow(board,gameData->finalOwnership);
-
+    else if (hist.isGameFinished) {
       finalValueTargets.win = (float)ScoreValue::whiteWinsOfWinner(hist.winner, gameData->drawEquivalentWinsForWhite);
       finalValueTargets.loss = 1.0f - finalValueTargets.win;
       finalValueTargets.noResult = 0.0f;
-      finalValueTargets.score = (float)ScoreValue::whiteScoreDrawAdjust(hist.finalWhiteMinusBlackScore,gameData->drawEquivalentWinsForWhite,hist);
+      finalValueTargets.score = 0.0f;
       finalValueTargets.hasLead = true;
       finalValueTargets.lead = finalValueTargets.score;
 
-      //Fill full and seki areas
-      {
-        board.calculateArea(gameData->finalFullArea, true, true, true, hist.rules.multiStoneSuicideLegal);
-
-        Color* independentLifeArea = new Color[Board::MAX_ARR_SIZE];
-        int whiteMinusBlackIndependentLifeRegionCount;
-        board.calculateIndependentLifeArea(independentLifeArea,whiteMinusBlackIndependentLifeRegionCount, false, false, hist.rules.multiStoneSuicideLegal);
-        for(int i = 0; i<Board::MAX_ARR_SIZE; i++) {
-          if(independentLifeArea[i] == C_EMPTY && (gameData->finalFullArea[i] == C_BLACK || gameData->finalFullArea[i] == C_WHITE))
-            gameData->finalSekiAreas[i] = true;
-          else
-            gameData->finalSekiAreas[i] = false;
-        }
-        delete[] independentLifeArea;
-      }
     }
+    else std::cout << "Not finished game";
     gameData->whiteValueTargetsByTurn.push_back(finalValueTargets);
 
     //If we had a hintloc, then don't trust the first value, it will be corrupted a bit by the forced playouts.
@@ -1770,7 +1733,7 @@ FinishedGameData* Play::runGame(
           failIllegalMove(toMoveBot,logger,sp->board,responseLoc);
 
         SidePosition* sp2 = new SidePosition(sp->board,sp->hist,sp->pla,gameData->changedNeuralNets.size());
-        sp2->hist.makeBoardMoveAssumeLegal(sp2->board,responseLoc,sp2->pla,NULL);
+        sp2->hist.makeBoardMoveAssumeLegal(sp2->board,responseLoc,sp2->pla);
         sp2->pla = getOpp(sp2->pla);
         if(sp2->hist.isGameFinished)
           delete sp2;
@@ -1785,7 +1748,7 @@ FinishedGameData* Play::runGame(
           Loc banMove = Board::NULL_LOC;
           Loc forkLoc = chooseRandomForkingMove(nnResultBuf.result.get(), sp2->board, sp2->hist, sp2->pla, gameRand, banMove);
           if(forkLoc != Board::NULL_LOC) {
-            sp2->hist.makeBoardMoveAssumeLegal(sp2->board,forkLoc,sp2->pla,NULL);
+            sp2->hist.makeBoardMoveAssumeLegal(sp2->board,forkLoc,sp2->pla);
             sp2->pla = getOpp(sp2->pla);
             if(sp2->hist.isGameFinished) delete sp2;
             else sidePositionsToSearch.push_back(sp2);
@@ -1830,45 +1793,6 @@ FinishedGameData* Play::runGame(
     }
 
 
-    //Fill in lead estimation on full-search positions
-    if(playSettings.estimateLeadProb > 0.0) {
-      assert(gameData->targetWeightByTurn.size() + 1 == gameData->whiteValueTargetsByTurn.size());
-      board = gameData->startBoard;
-      hist = gameData->startHist;
-      pla = gameData->startPla;
-
-      int startTurnIdx = gameData->startHist.moveHistory.size();
-      int numMoves = gameData->endHist.moveHistory.size() - gameData->startHist.moveHistory.size();
-      for(int turnAfterStart = 0; turnAfterStart<numMoves; turnAfterStart++) {
-        int turnIdx = turnAfterStart + startTurnIdx;
-        if(gameData->targetWeightByTurn[turnAfterStart] > 0 &&
-           //Avoid computing lead when no result was considered to be very likely, since in such cases
-           //the relationship between komi and the result can somewhat break.
-           gameData->whiteValueTargetsByTurn[turnAfterStart].noResult < 0.3 &&
-           gameRand.nextBool(playSettings.estimateLeadProb)
-        ) {
-          gameData->whiteValueTargetsByTurn[turnAfterStart].lead =
-            PlayUtils::computeLead(botB,botW,board,hist,pla,playSettings.estimateLeadVisits,otherGameProps);
-          gameData->whiteValueTargetsByTurn[turnAfterStart].hasLead = true;
-        }
-        Move move = gameData->endHist.moveHistory[turnIdx];
-        assert(move.pla == pla);
-        hist.makeBoardMoveAssumeLegal(board, move.loc, move.pla, NULL);
-        pla = getOpp(pla);
-      }
-
-      for(int i = 0; i<gameData->sidePositions.size(); i++) {
-        SidePosition* sp = gameData->sidePositions[i];
-        if(sp->targetWeight > 0 &&
-           sp->whiteValueTargets.noResult < 0.3 &&
-           gameRand.nextBool(playSettings.estimateLeadProb)
-        ) {
-          sp->whiteValueTargets.lead =
-            PlayUtils::computeLead(botB,botW,sp->board,sp->hist,sp->pla,playSettings.estimateLeadVisits,otherGameProps);
-          sp->whiteValueTargets.hasLead = true;
-        }
-      }
-    }
   }
 
   return gameData;
@@ -1902,7 +1826,7 @@ static void replayGameUpToMove(const FinishedGameData* finishedGameData, int mov
       return;
     }
     assert(finishedGameData->endHist.moveHistory[i].pla == pla);
-    hist.makeBoardMoveAssumeLegal(board,loc,pla,NULL);
+    hist.makeBoardMoveAssumeLegal(board,loc,pla);
     pla = getOpp(pla);
 
     if(hist.isGameFinished)
@@ -1991,7 +1915,7 @@ void Play::maybeForkGame(
     Loc loc = possibleMoves[i];
     Board copy = board;
     BoardHistory copyHist = hist;
-    copyHist.makeBoardMoveAssumeLegal(copy,loc,pla,NULL);
+    copyHist.makeBoardMoveAssumeLegal(copy,loc,pla);
     MiscNNInputParams nnInputParams;
     nnInputParams.drawEquivalentWinsForWhite = drawEquivalentWinsForWhite;
     bot->nnEvaluator->evaluate(copy,copyHist,getOpp(pla),nnInputParams,buf,false,false);
@@ -2005,7 +1929,7 @@ void Play::maybeForkGame(
 
   //Make that move
   assert(hist.isLegal(board,bestMove,pla));
-  hist.makeBoardMoveAssumeLegal(board,bestMove,pla,NULL);
+  hist.makeBoardMoveAssumeLegal(board,bestMove,pla);
   pla = getOpp(pla);
 
   //If the game is over now, don't actually do anything
@@ -2084,7 +2008,7 @@ void Play::maybeHintForkGame(
   if(!hist.isLegal(board,otherGameProps.hintLoc,pla))
     return;
 
-  hist.makeBoardMoveAssumeLegal(board,otherGameProps.hintLoc,pla,NULL);
+  hist.makeBoardMoveAssumeLegal(board,otherGameProps.hintLoc,pla);
   pla = getOpp(pla);
 
   //If the game is over now, don't actually do anything

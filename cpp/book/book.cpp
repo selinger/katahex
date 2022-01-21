@@ -113,7 +113,6 @@ static Hash128 getExtraPosHash(const Board& board) {
 void BookHash::getHashAndSymmetry(const BoardHistory& hist, int repBound, BookHash& hashRet, int& symmetryToAlignRet, vector<int>& symmetriesRet) {
   Board boardsBySym[SymmetryHelpers::NUM_SYMMETRIES];
   BoardHistory histsBySym[SymmetryHelpers::NUM_SYMMETRIES];
-  Hash128 accums[SymmetryHelpers::NUM_SYMMETRIES];
 
   // Make sure the book all matches orientation for rectangular boards.
   // Don't consider symmetries that change the lengths of x and y.
@@ -125,7 +124,6 @@ void BookHash::getHashAndSymmetry(const BoardHistory& hist, int repBound, BookHa
   for(int symmetry = 0; symmetry < numSymmetries; symmetry++) {
     boardsBySym[symmetry] = SymmetryHelpers::getSymBoard(hist.initialBoard,symmetry);
     histsBySym[symmetry] = BoardHistory(boardsBySym[symmetry], hist.initialPla, hist.rules);
-    accums[symmetry] = Hash128();
   }
 
   //TODO
@@ -134,19 +132,10 @@ void BookHash::getHashAndSymmetry(const BoardHistory& hist, int repBound, BookHa
     for(int symmetry = 0; symmetry < numSymmetries; symmetry++) {
       Loc moveLoc = SymmetryHelpers::getSymLoc(hist.moveHistory[i].loc, boardsBySym[symmetry], symmetry);
       Player movePla = hist.moveHistory[i].pla;
-      // Add the next
-      Hash128 nextHash = boardsBySym[symmetry].pos_hash ^ Board::ZOBRIST_PLAYER_HASH[movePla];
-      accums[symmetry].hash0 += nextHash.hash0;
-      accums[symmetry].hash1 += nextHash.hash1;
-      // Mix it up
-      accums[symmetry].hash0 = Hash::splitMix64(accums[symmetry].hash0);
-      accums[symmetry].hash1 = Hash::nasam(accums[symmetry].hash1);
 
       // Assume legal since we're only replaying moves from another history.
-      histsBySym[symmetry].makeBoardMoveAssumeLegal(boardsBySym[symmetry], moveLoc, movePla, nullptr);
-      if(boardsBySym[symmetry].simpleRepetitionBoundGt(moveLoc, repBound)) {
-        accums[symmetry] = Hash128();
-      }
+      histsBySym[symmetry].makeBoardMoveAssumeLegal(boardsBySym[symmetry], moveLoc, movePla);
+      
     }
   }
 
@@ -155,7 +144,7 @@ void BookHash::getHashAndSymmetry(const BoardHistory& hist, int repBound, BookHa
     Player nextPlayer = hist.presumedNextMovePla;
     constexpr double drawEquivalentWinsForWhite = 0.5;
     Hash128 stateHash = GraphHash::getStateHash(histsBySym[symmetry],nextPlayer,drawEquivalentWinsForWhite);
-    hashes[symmetry] = BookHash(accums[symmetry] ^ getExtraPosHash(boardsBySym[symmetry]), stateHash);
+    hashes[symmetry] = BookHash(getExtraPosHash(boardsBySym[symmetry]), stateHash);
   }
 
   // Use the smallest symmetry that gives us the same hash
@@ -490,7 +479,7 @@ SymBookNode SymBookNode::playMove(Board& board, BoardHistory& hist, Loc move) {
     return SymBookNode(nullptr);
   if(!hist.isLegal(board,move,node->pla))
     return SymBookNode(nullptr);
-  hist.makeBoardMoveAssumeLegal(board,move,node->pla,nullptr);
+  hist.makeBoardMoveAssumeLegal(board,move,node->pla);
   return ret;
 }
 ConstSymBookNode ConstSymBookNode::playMove(Board& board, BoardHistory& hist, Loc move) {
@@ -499,7 +488,7 @@ ConstSymBookNode ConstSymBookNode::playMove(Board& board, BoardHistory& hist, Lo
     return ConstSymBookNode(nullptr);
   if(!hist.isLegal(board,move,node->pla))
     return ConstSymBookNode(nullptr);
-  hist.makeBoardMoveAssumeLegal(board,move,node->pla,nullptr);
+  hist.makeBoardMoveAssumeLegal(board,move,node->pla);
   return ret;
 }
 
@@ -540,7 +529,7 @@ SymBookNode SymBookNode::playAndAddMove(Board& board, BoardHistory& hist, Loc mo
     }
   }
 
-  hist.makeBoardMoveAssumeLegal(board,move,node->pla,nullptr);
+  hist.makeBoardMoveAssumeLegal(board,move,node->pla);
   BookHash childHash;
   int symmetryToAlignToChild;
   vector<int> symmetriesOfChild;
@@ -638,7 +627,7 @@ bool ConstSymBookNode::getBoardHistoryReachingHere(BoardHistory& ret, vector<Loc
       // Something is very wrong, probably a corrupted book data structure.
       return false;
     }
-    hist.makeBoardMoveAssumeLegal(board, symMove, pathFromRoot[i]->pla, nullptr);
+    hist.makeBoardMoveAssumeLegal(board, symMove, pathFromRoot[i]->pla);
 
     // Update symmetryPathNodeToHist for the next loop.
     // symmetryPathNodeToHist is currently space[i] -> histSpace, and needs to become space[i+1] -> histSpace
@@ -1760,7 +1749,6 @@ void Book::exportToHtmlDir(
     {
       Loc loc = Board::PASS_LOC;
       // Avoid linking children that would end the phase
-      if(!hist.passWouldEndGame(board,node->pla)) {
         SymBookNode child = symNode.follow(loc);
         // Entirely omit linking children that are simply leaves, to save on the number of files we have to produce and serve.
         // if(!child.isNull() && child.node->moves.size() > 0) {
@@ -1769,7 +1757,7 @@ void Book::exportToHtmlDir(
           dataVarsStr += Global::intToString(board.y_size*board.x_size) + ":'../" + childPath + "',";
           linkSymmetriesStr += Global::intToString(board.y_size*board.x_size) + ":" + Global::intToString(child.symmetryOfNode) + ",";
         }
-      }
+      
     }
     dataVarsStr += "};\n";
     linkSymmetriesStr += "};\n";

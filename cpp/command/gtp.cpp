@@ -849,14 +849,6 @@ struct GTPEngine {
     //At least one of these hacks will use the bot to search stuff and clears its tree, so we apply them AFTER
     //all relevant logging and stuff.
 
-    //Implement friendly pass - in area scoring rules other than tromp-taylor, maybe pass once there are no points
-    //left to gain.
-    int64_t numVisitsForFriendlyPass = 8 + std::min((int64_t)1000, std::min(params.maxVisits, params.maxPlayouts) / 10);
-    moveLoc = PlayUtils::maybeFriendlyPass(cleanupBeforePass, friendlyPass, pla, moveLoc, bot->getSearchStopAndWait(), numVisitsForFriendlyPass);
-
-    //Implement cleanupBeforePass hack - if the bot wants to pass, instead cleanup if there is something to clean
-    //and we are in a ruleset where this is necessary or the user has configured it.
-    moveLoc = PlayUtils::maybeCleanupBeforePass(cleanupBeforePass, friendlyPass, pla, moveLoc, bot);
 
     //Actual reporting of chosen move---------------------
     if(resigned)
@@ -915,83 +907,6 @@ struct GTPEngine {
     bot->analyzeAsync(pla, searchFactor, args.secondsPerReport, callback);
   }
 
-  void computeAnticipatedWinnerAndScore(Player& winner, double& finalWhiteMinusBlackScore) {
-    stopAndWait();
-
-    //No playoutDoublingAdvantage to avoid bias
-    //Also never assume the game will end abruptly due to pass
-    {
-      SearchParams tmpParams = params;
-      tmpParams.playoutDoublingAdvantage = 0.0;
-      tmpParams.conservativePass = true;
-      bot->setParams(tmpParams);
-    }
-
-    //Make absolutely sure we can restore the bot's old state
-    const Player oldPla = bot->getRootPla();
-    const Board oldBoard = bot->getRootBoard();
-    const BoardHistory oldHist = bot->getRootHist();
-
-    Board board = bot->getRootBoard();
-    BoardHistory hist = bot->getRootHist();
-    Player pla = bot->getRootPla();
-
-    //Tromp-taylorish scoring, or finished territory game scoring (including noresult)
-    if(hist.isGameFinished && (!hist.rules.friendlyPassOk) 
-    ) {
-      //For GTP purposes, we treat noResult as a draw since there is no provision for anything else.
-      winner = hist.winner;
-      finalWhiteMinusBlackScore = hist.finalWhiteMinusBlackScore;
-    }
-    //Human-friendly score or incomplete game score estimation
-    else {
-      int64_t numVisits = std::max(50, params.numThreads * 10);
-      //Try computing the lead for white
-      double lead = PlayUtils::computeLead(bot->getSearchStopAndWait(),NULL,board,hist,pla,numVisits,OtherGameProperties());
-
-      //Round lead to nearest integer or half-integer
-      if(hist.rules.gameResultWillBeInteger())
-        lead = round(lead);
-      else
-        lead = round(lead+0.5)-0.5;
-
-      finalWhiteMinusBlackScore = lead;
-      winner = lead > 0 ? P_WHITE : lead < 0 ? P_BLACK : C_EMPTY;
-    }
-
-    //Restore
-    bot->setPosition(oldPla,oldBoard,oldHist);
-    bot->setParams(params);
-  }
-
-  vector<bool> computeAnticipatedStatuses() {
-    stopAndWait();
-
-    //Make absolutely sure we can restore the bot's old state
-    const Player oldPla = bot->getRootPla();
-    const Board oldBoard = bot->getRootBoard();
-    const BoardHistory oldHist = bot->getRootHist();
-
-    Board board = bot->getRootBoard();
-    BoardHistory hist = bot->getRootHist();
-    Player pla = bot->getRootPla();
-
-    int64_t numVisits = std::max(100, params.numThreads * 20);
-    vector<bool> isAlive;
-    //Tromp-taylorish statuses, or finished territory game statuses (including noresult)
-    if(hist.isGameFinished && (!hist.rules.friendlyPassOk))
-      isAlive = PlayUtils::computeAnticipatedStatusesSimple(board,hist);
-    //Human-friendly statuses or incomplete game status estimation
-    else {
-      vector<double> ownershipsBuf;
-      isAlive = PlayUtils::computeAnticipatedStatusesWithOwnership(bot->getSearchStopAndWait(),board,hist,pla,numVisits,ownershipsBuf);
-    }
-
-    //Restore
-    bot->setPosition(oldPla,oldBoard,oldHist);
-
-    return isAlive;
-  }
 
   string rawNN(int whichSymmetry) {
     if(nnEval == NULL)
@@ -1245,7 +1160,7 @@ static GTPEngine::AnalyzeArgs parseAnalyzeCommand(
 
 int MainCmds::gtp(const vector<string>& args) {
   Board::initHash();
-  ScoreValue::initTables();
+   
   Rand seedRand;
 
   ConfigParser cfg;
@@ -1324,8 +1239,6 @@ int MainCmds::gtp(const vector<string>& args) {
   SearchParams initialParams = Setup::loadSingleParams(cfg,Setup::SETUP_FOR_GTP);
   logger.write("Using " + Global::intToString(initialParams.numThreads) + " CPU thread(s) for search");
   //Set a default for conservativePass that differs from matches or selfplay
-  if(!cfg.contains("conservativePass") && !cfg.contains("conservativePass0"))
-    initialParams.conservativePass = true;
 
   const bool ponderingEnabled = cfg.getBool("ponderingEnabled");
 
@@ -2199,76 +2112,6 @@ int MainCmds::gtp(const vector<string>& args) {
       response = Global::trim(filterDoubleNewlines(sout.str()));
     }
 
-    else if(command == "final_score") {
-      engine->stopAndWait();
-
-      Player winner = C_EMPTY;
-      double finalWhiteMinusBlackScore = 0.0;
-      engine->computeAnticipatedWinnerAndScore(winner,finalWhiteMinusBlackScore);
-
-      if(winner == C_EMPTY)
-        response = "0";
-      else if(winner == C_BLACK)
-        response = "B+" + Global::strprintf("%.1f",-finalWhiteMinusBlackScore);
-      else if(winner == C_WHITE)
-        response = "W+" + Global::strprintf("%.1f",finalWhiteMinusBlackScore);
-      else
-        ASSERT_UNREACHABLE;
-    }
-
-    else if(command == "final_status_list") {
-      int statusMode = 0;
-      if(pieces.size() != 1) {
-        responseIsError = true;
-        response = "Expected one argument for final_status_list but got '" + Global::concat(pieces," ") + "'";
-      }
-      else {
-        if(pieces[0] == "alive")
-          statusMode = 0;
-        else if(pieces[0] == "seki")
-          statusMode = 1;
-        else if(pieces[0] == "dead")
-          statusMode = 2;
-        else {
-          responseIsError = true;
-          response = "Argument to final_status_list must be 'alive' or 'seki' or 'dead'";
-          statusMode = 3;
-        }
-
-        if(statusMode < 3) {
-          vector<bool> isAlive = engine->computeAnticipatedStatuses();
-          Board board = engine->bot->getRootBoard();
-          vector<Loc> locsToReport;
-
-          if(statusMode == 0) {
-            for(int y = 0; y<board.y_size; y++) {
-              for(int x = 0; x<board.x_size; x++) {
-                Loc loc = Location::getLoc(x,y,board.x_size);
-                if(board.colors[loc] != C_EMPTY && isAlive[loc])
-                  locsToReport.push_back(loc);
-              }
-            }
-          }
-          if(statusMode == 2) {
-            for(int y = 0; y<board.y_size; y++) {
-              for(int x = 0; x<board.x_size; x++) {
-                Loc loc = Location::getLoc(x,y,board.x_size);
-                if(board.colors[loc] != C_EMPTY && !isAlive[loc])
-                  locsToReport.push_back(loc);
-              }
-            }
-          }
-
-          response = "";
-          for(int i = 0; i<locsToReport.size(); i++) {
-            Loc loc = locsToReport[i];
-            if(i > 0)
-              response += " ";
-            response += Location::toString(loc,board);
-          }
-        }
-      }
-    }
 
     else if(command == "loadsgf") {
       if(pieces.size() != 1 && pieces.size() != 2) {
@@ -2539,7 +2382,7 @@ int MainCmds::gtp(const vector<string>& args) {
   delete engine;
   engine = NULL;
   NeuralNet::globalCleanup();
-  ScoreValue::freeTables();
+   
 
   logger.write("All cleaned up, quitting");
   return 0;

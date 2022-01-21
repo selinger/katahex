@@ -14,7 +14,6 @@ BoardHistory::BoardHistory()
    recentBoards(),
    currentRecentBoardIdx(0),
    presumedNextMovePla(P_BLACK),
-   whiteBonusScore(0.0f),
    isGameFinished(false),winner(C_EMPTY),finalWhiteMinusBlackScore(0.0f),
    isScored(false),isNoResult(false),isResignation(false)
 {
@@ -32,7 +31,6 @@ BoardHistory::BoardHistory(const Board& board, Player pla, const Rules& r)
    recentBoards(),
    currentRecentBoardIdx(0),
    presumedNextMovePla(pla),
-   whiteBonusScore(0.0f),
    isGameFinished(false),winner(C_EMPTY),finalWhiteMinusBlackScore(0.0f),
    isScored(false),isNoResult(false),isResignation(false)
 {
@@ -49,7 +47,6 @@ BoardHistory::BoardHistory(const BoardHistory& other)
    recentBoards(),
    currentRecentBoardIdx(other.currentRecentBoardIdx),
    presumedNextMovePla(other.presumedNextMovePla),
-   whiteBonusScore(other.whiteBonusScore),
    isGameFinished(other.isGameFinished),winner(other.winner),finalWhiteMinusBlackScore(other.finalWhiteMinusBlackScore),
    isScored(other.isScored),isNoResult(other.isNoResult),isResignation(other.isResignation)
 {
@@ -69,7 +66,6 @@ BoardHistory& BoardHistory::operator=(const BoardHistory& other)
   std::copy(other.recentBoards, other.recentBoards+NUM_RECENT_BOARDS, recentBoards);
   currentRecentBoardIdx = other.currentRecentBoardIdx;
   presumedNextMovePla = other.presumedNextMovePla;
-  whiteBonusScore = other.whiteBonusScore;
   isGameFinished = other.isGameFinished;
   winner = other.winner;
   finalWhiteMinusBlackScore = other.finalWhiteMinusBlackScore;
@@ -89,7 +85,6 @@ BoardHistory::BoardHistory(BoardHistory&& other) noexcept
   recentBoards(),
   currentRecentBoardIdx(other.currentRecentBoardIdx),
   presumedNextMovePla(other.presumedNextMovePla),
-  whiteBonusScore(other.whiteBonusScore),
   isGameFinished(other.isGameFinished),winner(other.winner),finalWhiteMinusBlackScore(other.finalWhiteMinusBlackScore),
   isScored(other.isScored),isNoResult(other.isNoResult),isResignation(other.isResignation)
 {
@@ -106,7 +101,6 @@ BoardHistory& BoardHistory::operator=(BoardHistory&& other) noexcept
   std::copy(other.recentBoards, other.recentBoards+NUM_RECENT_BOARDS, recentBoards);
   currentRecentBoardIdx = other.currentRecentBoardIdx;
   presumedNextMovePla = other.presumedNextMovePla;
-  whiteBonusScore = other.whiteBonusScore;
   isGameFinished = other.isGameFinished;
   winner = other.winner;
   finalWhiteMinusBlackScore = other.finalWhiteMinusBlackScore;
@@ -133,8 +127,6 @@ void BoardHistory::clear(const Board& board, Player pla, const Rules& r) {
 
   presumedNextMovePla = pla;
 
-
-  whiteBonusScore = 0.0f;
   isGameFinished = false;
   winner = C_EMPTY;
   finalWhiteMinusBlackScore = 0.0f;
@@ -169,7 +161,6 @@ void BoardHistory::printDebugInfo(ostream& out, const Board& board) const {
   out << board << endl;
   out << "Initial pla " << PlayerIO::playerToString(initialPla) << endl;
   out << "Rules " << rules << endl;
-  out << "White bonus score " << whiteBonusScore << endl;
   out << "Presumed next pla " << PlayerIO::playerToString(presumedNextMovePla) << endl;
   out << "Game result " << isGameFinished << " " << PlayerIO::playerToString(winner) << " "
       << finalWhiteMinusBlackScore << " " << isScored << " " << isNoResult << " " << isResignation << endl;
@@ -177,7 +168,6 @@ void BoardHistory::printDebugInfo(ostream& out, const Board& board) const {
   for(int i = 0; i<moveHistory.size(); i++)
     out << Location::toString(moveHistory[i].loc,board) << " ";
   out << endl;
-  assert(firstTurnIdxWithKoHistory + koHashHistory.size() == moveHistory.size() + 1);
 }
 
 
@@ -193,8 +183,8 @@ void BoardHistory::setKomi(float newKomi) {
   rules.komi = newKomi;
 
   //Recompute the game result due to the new komi
-  if(isGameFinished && isScored)
-    std::cout<<"setKomi when isGameFinished && isScored";
+  //if(isGameFinished && isScored)
+  //  std::cout<<"setKomi when isGameFinished && isScored";
 }
 
 
@@ -209,7 +199,7 @@ float BoardHistory::whiteKomiAdjustmentForDraws(double drawEquivalentWinsForWhit
 }
 
 float BoardHistory::currentSelfKomi(Player pla, double drawEquivalentWinsForWhite) const {
-  float whiteKomiAdjusted = whiteBonusScore + rules.komi + whiteKomiAdjustmentForDraws(drawEquivalentWinsForWhite);
+  float whiteKomiAdjusted =  rules.komi + whiteKomiAdjustmentForDraws(drawEquivalentWinsForWhite);
 
   if(pla == P_WHITE)
     return whiteKomiAdjusted;
@@ -267,11 +257,11 @@ bool BoardHistory::makeBoardMoveTolerant(Board& board, Loc moveLoc, Player moveP
     return false;
   if(!board.isLegalIgnoringKo(moveLoc,movePla,multiStoneSuicideLegal))
     return false;
-  makeBoardMoveAssumeLegal(board,moveLoc,movePla,NULL);
+  makeBoardMoveAssumeLegal(board,moveLoc,movePla);
   return true;
 }
 
-void BoardHistory::makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player movePla, const KoHashTable* rootKoHashTable) {
+void BoardHistory::makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player movePla) {
   Hash128 posHashBeforeMove = board.pos_hash;
 
   //If somehow we're making a move after the game was ended, just clear those values and continue
@@ -295,9 +285,47 @@ void BoardHistory::makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player mo
   moveHistory.push_back(Move(moveLoc,movePla));
   presumedNextMovePla = getOpp(movePla);
 
-  if (board.numBlackCaptures > 0)setWinner(P_WHITE);
-  if (board.numWhiteCaptures < 0)setWinner(P_BLACK);
+  maybeFinishGame(board);
+}
 
+void BoardHistory::maybeFinishGame(Board& board)
+{
+  if (int(rules.komi + 0.5) == rules.komi + 0.5)//half komi, no draw
+  {
+    int passBound = rules.komi - 0.5;
+    if (board.numBlackCaptures >= CAPTURES_TO_WIN)setWinner(P_WHITE);
+    if (board.numWhiteCaptures >= CAPTURES_TO_WIN)setWinner(P_BLACK);
+    if (board.numBlackPasses > -passBound && board.numBlackPasses > 0)setWinner(P_WHITE);
+    if (board.numWhitePasses > passBound && board.numWhitePasses > 0)setWinner(P_BLACK);
+  }
+  else if (int(rules.komi) == rules.komi)
+  {
+    if (rules.komi >= 1)//white can pass
+    {
+      if (board.numWhiteCaptures >= CAPTURES_TO_WIN)setWinner(P_BLACK);
+      int drawPassNum = rules.komi;
+      if (board.numBlackCaptures >= CAPTURES_TO_WIN)
+      {
+        if (board.numWhitePasses >= drawPassNum)setWinner(C_EMPTY);
+        else setWinner(P_WHITE);
+      }
+      if (board.numWhitePasses > drawPassNum)setWinner(C_BLACK);
+      if (board.numBlackPasses > 0)setWinner(C_WHITE);
+    }
+    else
+    {
+      if (board.numBlackCaptures >= CAPTURES_TO_WIN)setWinner(P_WHITE);
+      int drawPassNum = 1-rules.komi;
+      if (board.numWhiteCaptures >= CAPTURES_TO_WIN)
+      {
+        if (board.numBlackPasses >= drawPassNum)setWinner(C_EMPTY);
+        else setWinner(P_BLACK);
+      }
+      if (board.numBlackPasses > drawPassNum)setWinner(C_WHITE);
+      if (board.numWhitePasses > 0)setWinner(C_BLACK);
+    }
+  }
+  else std::cout << "invalid komi";
 }
 
 
@@ -309,6 +337,8 @@ Hash128 BoardHistory::getSituationRulesAndKoHash(const Board& board, const Board
   Hash128 hash = board.pos_hash;
   hash ^= Board::ZOBRIST_PLAYER_HASH[nextPlayer];
 
+  if(board.ko_loc != Board::NULL_LOC)
+    hash ^= Board::ZOBRIST_KO_LOC_HASH[board.ko_loc];
 
   float selfKomi = hist.currentSelfKomi(nextPlayer,drawEquivalentWinsForWhite);
 

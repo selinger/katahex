@@ -55,7 +55,7 @@ static const int ternarySearchInitialMax = 32;
 
 int MainCmds::benchmark(const vector<string>& args) {
   Board::initHash();
-  ScoreValue::initTables();
+   
 
   ConfigParser cfg;
   string modelFile;
@@ -267,7 +267,7 @@ int MainCmds::benchmark(const vector<string>& args) {
   delete nnEval;
   NeuralNet::globalCleanup();
   delete sgf;
-  ScoreValue::freeTables();
+   
 
   return 0;
 }
@@ -513,7 +513,7 @@ static vector<PlayUtils::BenchmarkResults> doAutoTuneThreads(
 
 int MainCmds::genconfig(const vector<string>& args, const string& firstCommand) {
   Board::initHash();
-  ScoreValue::initTables();
+   
 
   string outputFile;
   string modelFile;
@@ -950,7 +950,7 @@ int MainCmds::genconfig(const vector<string>& args, const string& firstCommand) 
 
   NeuralNet::globalCleanup();
   delete sgf;
-  ScoreValue::freeTables();
+   
 
   return 0;
 }

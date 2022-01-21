@@ -14,7 +14,6 @@ using namespace std;
 
 int MainCmds::evalsgf(const vector<string>& args) {
   Board::initHash();
-  ScoreValue::initTables();
   Rand seedRand;
 
   ConfigParser cfg;
@@ -186,7 +185,7 @@ int MainCmds::evalsgf(const vector<string>& args) {
         cerr << "Extra illegal move for " << PlayerIO::colorToChar(nextPla) << ": " << Location::toString(loc,board) << endl;
         throw StringError("Illegal extra move");
       }
-      hist.makeBoardMoveAssumeLegal(board,loc,nextPla,NULL);
+      hist.makeBoardMoveAssumeLegal(board,loc,nextPla);
       nextPla = getOpp(nextPla);
     }
   };
@@ -309,7 +308,7 @@ int MainCmds::evalsgf(const vector<string>& args) {
         cerr << "Branch Illegal move for " << PlayerIO::colorToChar(pla) << ": " << Location::toString(loc,board) << endl;
         return 1;
       }
-      copyHist.makeBoardMoveAssumeLegal(copy,loc,pla,NULL);
+      copyHist.makeBoardMoveAssumeLegal(copy,loc,pla);
       pla = getOpp(pla);
     }
     Board::printBoard(sout, copy, Board::NULL_LOC, &(copyHist.moveHistory));
@@ -417,31 +416,6 @@ int MainCmds::evalsgf(const vector<string>& args) {
     }
   }
 
-  if(printScoreNow) {
-    sout << "Score now (ROOT position):\n";
-    Board copy(board);
-    BoardHistory copyHist(hist);
-    Color area[Board::MAX_ARR_SIZE];
-    copyHist.endAndScoreGameNow(copy,area);
-
-    for(int y = 0; y<copy.y_size; y++) {
-      for(int x = 0; x<copy.x_size; x++) {
-        Loc l = Location::getLoc(x,y,copy.x_size);
-        sout << PlayerIO::colorToChar(area[l]);
-      }
-      sout << endl;
-    }
-    sout << endl;
-
-    sout << "Komi: " << copyHist.rules.komi << endl;
-    sout << "WBonus: " << copyHist.whiteBonusScore << endl;
-    sout << "Final: "; WriteSgf::printGameResult(sout, copyHist); sout << endl;
-  }
-
-  if(printRootEndingBonus) {
-    sout << "Ending bonus (ROOT position)\n";
-    search->printRootEndingScoreValueBonus(sout);
-  }
 
   sout << "Time taken: " << timer.getSeconds() << "\n";
   sout << "Root visits: " << search->getRootVisits() << "\n";
@@ -457,14 +431,6 @@ int MainCmds::evalsgf(const vector<string>& args) {
   search->printTree(sout, search->rootNode, options, perspective);
   logger.write(sout.str());
 
-  if(printLead) {
-    BoardHistory hist2(hist);
-    double lead = PlayUtils::computeLead(
-      bot->getSearchStopAndWait(), NULL, board, hist2, nextPla,
-      20, OtherGameProperties()
-    );
-    cout << "LEAD: " << lead << endl;
-  }
 
   if(printGraph) {
     std::reverse(nodes.begin(),nodes.end());
@@ -490,7 +456,6 @@ int MainCmds::evalsgf(const vector<string>& args) {
   delete nnEval;
   NeuralNet::globalCleanup();
   delete sgf;
-  ScoreValue::freeTables();
 
   return 0;
 }

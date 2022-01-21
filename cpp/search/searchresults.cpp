@@ -315,8 +315,6 @@ bool Search::getNodeRawNNValues(const SearchNode& node, ReportedSearchValues& va
   double scoreMean = nnOutput->whiteScoreMean;
   double scoreMeanSq = nnOutput->whiteScoreMeanSq;
   double scoreStdev = ScoreValue::getScoreStdev(scoreMean,scoreMeanSq);
-  values.staticScoreValue = ScoreValue::expectedWhiteScoreValue(scoreMean,scoreStdev,0.0,2.0,rootBoard);
-  values.dynamicScoreValue = ScoreValue::expectedWhiteScoreValue(scoreMean,scoreStdev,recentScoreCenter,searchParams.dynamicScoreCenterScale,rootBoard);
   values.expectedScore = scoreMean;
   values.expectedScoreStdev = scoreStdev;
   values.lead = nnOutput->whiteLead;
@@ -547,42 +545,6 @@ void Search::printRootPolicyMap(ostream& out) const {
     out << endl;
   }
   out << endl;
-}
-
-void Search::printRootEndingScoreValueBonus(ostream& out) const {
-  if(rootNode == NULL)
-    return;
-  const NNOutput* nnOutput = rootNode->getNNOutput();
-  if(nnOutput == NULL)
-    return;
-  if(nnOutput->whiteOwnerMap == NULL)
-    return;
-
-  int childrenCapacity;
-  const SearchChildPointer* children = rootNode->getChildren(childrenCapacity);
-  for(int i = 0; i<childrenCapacity; i++) {
-    const SearchNode* child = children[i].getIfAllocated();
-    if(child == NULL)
-      break;
-
-    int64_t edgeVisits = children[i].getEdgeVisits();
-    Loc moveLoc = children[i].getMoveLocRelaxed();
-    int64_t childVisits = child->stats.visits.load(std::memory_order_acquire);
-    double scoreMeanAvg = child->stats.scoreMeanAvg.load(std::memory_order_acquire);
-    double scoreMeanSqAvg = child->stats.scoreMeanSqAvg.load(std::memory_order_acquire);
-    double utilityAvg = child->stats.utilityAvg.load(std::memory_order_acquire);
-
-    double utilityNoBonus = utilityAvg;
-    double endingScoreBonus = getEndingWhiteScoreBonus(*rootNode,moveLoc);
-    double utilityDiff = getScoreUtilityDiff(scoreMeanAvg, scoreMeanSqAvg, endingScoreBonus);
-    double utilityWithBonus = utilityNoBonus + utilityDiff;
-
-    out << Location::toString(moveLoc,rootBoard) << " " << Global::strprintf(
-      "visits %d edgeVisits %d utilityNoBonus %.2fc utilityWithBonus %.2fc endingScoreBonus %.2f",
-      childVisits, edgeVisits, utilityNoBonus*100, utilityWithBonus*100, endingScoreBonus
-    );
-    out << endl;
-  }
 }
 
 void Search::appendPV(vector<Loc>& buf, vector<int64_t>& visitsBuf, vector<Loc>& scratchLocs, vector<double>& scratchValues, const SearchNode* node, int maxDepth) const {

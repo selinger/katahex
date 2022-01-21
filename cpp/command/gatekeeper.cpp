@@ -124,7 +124,7 @@ namespace {
           Board endBoard = hist.getRecentBoard(0);
           //Force game end just in caseif we crossed a move limit
           if(!hist.isGameFinished)
-            hist.endAndScoreGameNow(endBoard);
+            hist.setWinner(C_EMPTY);
 
           ostringstream oresult;
           WriteSgf::printGameResult(oresult,hist);
@@ -207,7 +207,7 @@ namespace {
 
 int MainCmds::gatekeeper(const vector<string>& args) {
   Board::initHash();
-  ScoreValue::initTables();
+   
   Rand seedRand;
 
   ConfigParser cfg;
@@ -578,7 +578,7 @@ int MainCmds::gatekeeper(const vector<string>& args) {
   //Delete and clean up everything else
   NeuralNet::globalCleanup();
   delete gameRunner;
-  ScoreValue::freeTables();
+   
 
   if(sigReceived.load())
     logger.write("Exited cleanly after signal");

@@ -9,8 +9,6 @@ struct ReportedSearchValues {
   double winValue;
   double lossValue;
   double noResultValue;
-  double staticScoreValue;
-  double dynamicScoreValue;
   double expectedScore;
   double expectedScoreStdev;
   double lead;

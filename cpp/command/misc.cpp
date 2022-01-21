@@ -61,6 +61,8 @@ static void writeLine(
   cout << baseHist.moveHistory.size() << " ";
   cout << board.numBlackCaptures << " ";
   cout << board.numWhiteCaptures << " ";
+  cout << board.numBlackPasses << " ";
+  cout << board.numWhitePasses << " ";
 
   for(int y = 0; y<board.y_size; y++) {
     for(int x = 0; x<board.x_size; x++) {
@@ -329,7 +331,7 @@ static void initializeDemoGame(Board& board, BoardHistory& hist, Player& pla, Ra
           break;
 
         //Make the move!
-        hist.makeBoardMoveAssumeLegal(board,nextMove.loc,nextMove.pla,NULL);
+        hist.makeBoardMoveAssumeLegal(board,nextMove.loc,nextMove.pla);
         pla = getOpp(pla);
 
         hist.clear(board,pla,hist.rules);
@@ -365,7 +367,6 @@ static void initializeDemoGame(Board& board, BoardHistory& hist, Player& pla, Ra
 
 int MainCmds::demoplay(const vector<string>& args) {
   Board::initHash();
-  ScoreValue::initTables();
   Rand seedRand;
 
   ConfigParser cfg;
@@ -459,7 +460,6 @@ int MainCmds::demoplay(const vector<string>& args) {
     //Move loop
     int maxMovesPerGame = 1600;
     for(int i = 0; i<maxMovesPerGame; i++) {
-      baseHist.endGameIfAllPassAlive(baseBoard);
       if(baseHist.isGameFinished)
         break;
 
@@ -525,7 +525,7 @@ int MainCmds::demoplay(const vector<string>& args) {
       else {
         //And make the move on our copy of the board
         assert(baseHist.isLegal(baseBoard,moveLoc,pla));
-        baseHist.makeBoardMoveAssumeLegal(baseBoard,moveLoc,pla,NULL);
+        baseHist.makeBoardMoveAssumeLegal(baseBoard,moveLoc,pla);
 
         //If the game is over, skip making the move on the bot, to preserve
         //the last known value of the search tree for display purposes
@@ -553,7 +553,6 @@ int MainCmds::demoplay(const vector<string>& args) {
   delete bot;
   delete nnEval;
   NeuralNet::globalCleanup();
-  ScoreValue::freeTables();
 
   logger.write("All cleaned up, quitting");
   return 0;
@@ -575,7 +574,6 @@ int MainCmds::printclockinfo(const vector<string>& args) {
 
 int MainCmds::samplesgfs(const vector<string>& args) {
   Board::initHash();
-  ScoreValue::initTables();
   Rand seedRand;
 
   vector<string> sgfDirs;
@@ -797,7 +795,6 @@ int MainCmds::samplesgfs(const vector<string>& args) {
 
   logger.write("All done");
 
-  ScoreValue::freeTables();
   return 0;
 }
 
@@ -814,7 +811,7 @@ static bool maybeGetValuesAfterMove(
   if(moveLoc != Board::NULL_LOC) {
     if(!hist.isLegal(newBoard,moveLoc,newNextPla))
       return false;
-    newHist.makeBoardMoveAssumeLegal(newBoard,moveLoc,newNextPla,NULL);
+    newHist.makeBoardMoveAssumeLegal(newBoard,moveLoc,newNextPla);
     newNextPla = getOpp(newNextPla);
   }
 
@@ -868,7 +865,6 @@ struct PosQueueEntry {
 
 int MainCmds::dataminesgfs(const vector<string>& args) {
   Board::initHash();
-  ScoreValue::initTables();
   Rand seedRand;
 
   ConfigParser cfg;
@@ -1322,7 +1318,7 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
           logger.write("Illegal move in " + fileName + " turn " + Global::intToString(m) + " move " + Location::toString(sgfMoves[m].loc, board.x_size, board.y_size));
         break;
       }
-      hist.makeBoardMoveAssumeLegal(board,sgfMoves[m].loc,sgfMoves[m].pla,NULL);
+      hist.makeBoardMoveAssumeLegal(board,sgfMoves[m].loc,sgfMoves[m].pla);
       nextPla = getOpp(sgfMoves[m].pla);
     }
     boards.push_back(board);
@@ -1508,7 +1504,7 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
       if(!hist.isLegal(board,sample.moves[i].loc,sample.moves[i].pla))
         return;
       assert(sample.moves[i].pla == pla);
-      hist.makeBoardMoveAssumeLegal(board,sample.moves[i].loc,sample.moves[i].pla,NULL);
+      hist.makeBoardMoveAssumeLegal(board,sample.moves[i].loc,sample.moves[i].pla);
       pla = getOpp(pla);
     }
 
@@ -1559,10 +1555,6 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
       return;
     sample.weight = weight;
 
-    if(flipIfPassOrWFirst) {
-      if(treeHist.hasBlackPassOrWhiteFirst())
-        sample = sample.getColorFlipped();
-    }
 
     expensiveEvaluateMove(
       search, sample.hintLoc, pla, board, hist,
@@ -1753,7 +1745,6 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
   delete gameInit;
   delete nnEval;
   NeuralNet::globalCleanup();
-  ScoreValue::freeTables();
   return 0;
 }
 
@@ -1762,7 +1753,6 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
 
 int MainCmds::trystartposes(const vector<string>& args) {
   Board::initHash();
-  ScoreValue::initTables();
   Rand seedRand;
 
   ConfigParser cfg;
@@ -1911,14 +1901,14 @@ int MainCmds::trystartposes(const vector<string>& args) {
   delete search;
   delete nnEval;
   NeuralNet::globalCleanup();
-  ScoreValue::freeTables();
+   
   return 0;
 }
 
 
 int MainCmds::viewstartposes(const vector<string>& args) {
   Board::initHash();
-  ScoreValue::initTables();
+   
 
   ConfigParser cfg;
   string modelFile;
@@ -2058,14 +2048,14 @@ int MainCmds::viewstartposes(const vector<string>& args) {
   if(nnEval != NULL)
     delete nnEval;
 
-  ScoreValue::freeTables();
+   
   return 0;
 }
 
 
 int MainCmds::sampleinitializations(const vector<string>& args) {
   Board::initHash();
-  ScoreValue::initTables();
+   
 
   ConfigParser cfg;
   string modelFile;
@@ -2172,6 +2162,6 @@ int MainCmds::sampleinitializations(const vector<string>& args) {
   if(nnEval != NULL)
     delete nnEval;
 
-  ScoreValue::freeTables();
+   
   return 0;
 }

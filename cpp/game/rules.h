@@ -35,7 +35,6 @@ struct Rules {
 
   static Rules getTrompTaylorish();
 
-  static std::set<std::string> koRuleStrings();
   static std::set<std::string> taxRuleStrings();
   static int parseTaxRule(const std::string& s);
   static std::string writeTaxRule(int taxRule);

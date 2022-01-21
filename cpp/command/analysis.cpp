@@ -56,7 +56,7 @@ struct AnalyzeRequest {
 
 int MainCmds::analysis(const vector<string>& args) {
   Board::initHash();
-  ScoreValue::initTables();
+   
   Rand seedRand;
 
   ConfigParser cfg;
@@ -133,9 +133,6 @@ int MainCmds::analysis(const vector<string>& args) {
   auto loadParams = [](ConfigParser& config, SearchParams& params, Player& perspective, Player defaultPerspective) {
     params = Setup::loadSingleParams(config,Setup::SETUP_FOR_ANALYSIS);
     perspective = Setup::parseReportAnalysisWinrates(config,defaultPerspective);
-    //Set a default for conservativePass that differs from matches or selfplay
-    if(!config.contains("conservativePass") && !config.contains("conservativePass0"))
-      params.conservativePass = true;
   };
 
   SearchParams defaultParams;
@@ -1107,7 +1104,7 @@ int MainCmds::analysis(const vector<string>& args) {
   logger.write("NN avg batch size: " + Global::doubleToString(nnEval->averageProcessedBatchSize()));
   delete nnEval;
   NeuralNet::globalCleanup();
-  ScoreValue::freeTables();
+   
   logger.write("All cleaned up, quitting");
   return 0;
 }

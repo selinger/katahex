@@ -355,25 +355,14 @@ bool Search::makeMove(Loc moveLoc, Player movePla) {
   }
 
 
-  rootHistory.makeBoardMoveAssumeLegal(rootBoard,moveLoc,rootPla,rootKoHashTable);
+  rootHistory.makeBoardMoveAssumeLegal(rootBoard,moveLoc,rootPla);
   rootPla = getOpp(rootPla);
-  rootKoHashTable->recompute(rootHistory);
 
   //Explicitly clear avoid move arrays when we play a move - user needs to respecify them if they want them.
   avoidMoveUntilByLocBlack.clear();
   avoidMoveUntilByLocWhite.clear();
 
 
-  //In the case that we are conservativePass and a pass would end the game, need to clear the search.
-  //This is because deeper in the tree, such a node would have been explored as ending the game, but now that
-  //it's a root pass, it needs to be treated as if it no longer ends the game.
-  if(searchParams.conservativePass && rootHistory.passWouldEndGame(rootBoard,rootPla))
-    clearSearch();
-
-  //In the case that we're preventing encore, and the phase would have ended, we also need to clear the search
-  //since the search was conducted on the assumption that we're going into encore now.
-  if(rootHistory.passWouldEndGame(rootBoard,rootPla))
-    clearSearch();
 
   return true;
 }
@@ -979,49 +968,6 @@ void Search::recursivelyRecomputeStats(SearchNode& n) {
 
 
 void Search::computeRootValues() {
-  //rootSafeArea is strictly pass-alive groups and strictly safe territory.
-  bool nonPassAliveStones = false;
-  bool safeBigTerritories = false;
-  bool unsafeBigTerritories = false;
-  bool isMultiStoneSuicideLegal = rootHistory.rules.multiStoneSuicideLegal;
-  rootBoard.calculateArea(
-    rootSafeArea,
-    nonPassAliveStones,
-    safeBigTerritories,
-    unsafeBigTerritories,
-    isMultiStoneSuicideLegal
-  );
-
-  //Figure out how to set recentScoreCenter
-  {
-    bool foundExpectedScoreFromTree = false;
-    double expectedScore = 0.0;
-    if(rootNode != NULL) {
-      const SearchNode& node = *rootNode;
-      int64_t numVisits = node.stats.visits.load(std::memory_order_acquire);
-      double weightSum = node.stats.weightSum.load(std::memory_order_acquire);
-      double scoreMeanAvg = node.stats.scoreMeanAvg.load(std::memory_order_acquire);
-      if(numVisits > 0 && weightSum > 0) {
-        foundExpectedScoreFromTree = true;
-        expectedScore = scoreMeanAvg;
-      }
-    }
-
-    //Grab a neural net evaluation for the current position and use that as the center
-    if(!foundExpectedScoreFromTree) {
-      NNResultBuf nnResultBuf;
-      bool includeOwnerMap = true;
-      computeRootNNEvaluation(nnResultBuf,includeOwnerMap);
-      expectedScore = nnResultBuf.result->whiteScoreMean;
-    }
-
-    recentScoreCenter = expectedScore * (1.0 - searchParams.dynamicScoreCenterZeroWeight);
-    double cap =  sqrt(rootBoard.x_size * rootBoard.y_size) * searchParams.dynamicScoreCenterScale;
-    if(recentScoreCenter > expectedScore + cap)
-      recentScoreCenter = expectedScore + cap;
-    if(recentScoreCenter < expectedScore - cap)
-      recentScoreCenter = expectedScore - cap;
-  }
 
   //If we're using graph search, we recompute the graph hash from scratch at the start of search.
   if(searchParams.useGraphSearch)
@@ -1087,8 +1033,8 @@ bool Search::playoutDescend(
     else {
       double winLossValue = 2.0 * ScoreValue::whiteWinsOfWinner(thread.history.winner, searchParams.drawEquivalentWinsForWhite) - 1;
       double noResultValue = 0.0;
-      double scoreMean = ScoreValue::whiteScoreDrawAdjust(thread.history.finalWhiteMinusBlackScore,searchParams.drawEquivalentWinsForWhite,thread.history);
-      double scoreMeanSq = ScoreValue::whiteScoreMeanSqOfScoreGridded(thread.history.finalWhiteMinusBlackScore,searchParams.drawEquivalentWinsForWhite);
+      double scoreMean = thread.history.finalWhiteMinusBlackScore;
+      double scoreMeanSq = thread.history.finalWhiteMinusBlackScore*thread.history.finalWhiteMinusBlackScore;
       double lead = scoreMean;
       double weight = (searchParams.useUncertainty && nnEvaluator->supportsShorttermError()) ? searchParams.uncertaintyMaxWeight : 1.0;
       addLeafValue(node, winLossValue, noResultValue, scoreMean, scoreMeanSq, lead, weight, true, false);
@@ -1143,9 +1089,9 @@ bool Search::playoutDescend(
     //Could also be true if we have an illegal move due to graph search and we had a cycle and superko interaction, or a true collision
     //on an older path that results in bad transposition between positions that don't transpose.
     if(bestChildIdx >= 0 && !thread.history.isLegal(thread.board,bestChildMoveLoc,thread.pla)) {
+      Board::printBoard(std::cout, thread.board, bestChildMoveLoc, NULL);
       bool isReInit = true;
       initNodeNNOutput(thread,node,isRoot,true,isReInit);
-
       {
         NNOutput* nnOutput = node.getNNOutput();
         assert(nnOutput != NULL);
@@ -1207,7 +1153,7 @@ bool Search::playoutDescend(
       assert(childrenCapacity > bestChildIdx);
 
       //Make the move! We need to make the move before we create the node so we can see the new state and get the right graphHash.
-      thread.history.makeBoardMoveAssumeLegal(thread.board,bestChildMoveLoc,thread.pla,rootKoHashTable);
+      thread.history.makeBoardMoveAssumeLegal(thread.board,bestChildMoveLoc,thread.pla);
       thread.pla = getOpp(thread.pla);
       if(searchParams.useGraphSearch)
         thread.graphHash = GraphHash::getGraphHash(
@@ -1215,7 +1161,7 @@ bool Search::playoutDescend(
         );
 
       //If conservative pass, passing from the root is always non-terminal
-      const bool forceNonTerminal = searchParams.conservativePass && (&node == rootNode) && bestChildMoveLoc == Board::PASS_LOC;
+      const bool forceNonTerminal = false;
       child = allocateOrFindNode(thread, thread.pla, bestChildMoveLoc, forceNonTerminal, thread.graphHash);
       child->virtualLosses.fetch_add(1,std::memory_order_release);
 
@@ -1264,7 +1210,7 @@ bool Search::playoutDescend(
       }
 
       //Make the move!
-      thread.history.makeBoardMoveAssumeLegal(thread.board,bestChildMoveLoc,thread.pla,rootKoHashTable);
+      thread.history.makeBoardMoveAssumeLegal(thread.board,bestChildMoveLoc,thread.pla);
       thread.pla = getOpp(thread.pla);
       if(searchParams.useGraphSearch)
         thread.graphHash = GraphHash::getGraphHash(

@@ -57,9 +57,6 @@ bool Rules::komiIsIntOrHalfInt(float komi) {
   return std::isfinite(komi) && komi * 2 == (int)(komi * 2);
 }
 
-set<string> Rules::koRuleStrings() {
-  return {"SIMPLE","POSITIONAL","SITUATIONAL","SPIGHT"};
-}
 set<string> Rules::taxRuleStrings() {
   return {"NONE","SEKI","ALL"};
 }

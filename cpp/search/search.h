@@ -308,7 +308,6 @@ struct Search {
   void printTree(std::ostream& out, const SearchNode* node, PrintTreeOptions options, Player perspective) const;
   void printRootPolicyMap(std::ostream& out) const;
   void printRootOwnershipMap(std::ostream& out, Player perspective) const;
-  void printRootEndingScoreValueBonus(std::ostream& out) const;
 
   //Get detailed analysis data, designed for lz-analyze and kata-analyze commands.
   void getAnalysisData(
@@ -386,7 +385,6 @@ private:
   // searchhelpers.cpp
   //----------------------------------------------------------------------------------------
   double getPatternBonus(Hash128 patternBonusHash, Player prevMovePla) const;
-  double getEndingWhiteScoreBonus(const SearchNode& parent, Loc moveLoc) const;
 
   double interpolateEarly(double halflife, double earlyValue, double value) const;
 

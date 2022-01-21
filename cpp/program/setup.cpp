@@ -580,9 +580,6 @@ vector<SearchParams> Setup::loadParams(
     if(cfg.contains("rootPruneUselessMoves"+idxStr)) params.rootPruneUselessMoves = cfg.getBool("rootPruneUselessMoves"+idxStr);
     else if(cfg.contains("rootPruneUselessMoves"))   params.rootPruneUselessMoves = cfg.getBool("rootPruneUselessMoves");
     else                                             params.rootPruneUselessMoves = true;
-    if(cfg.contains("conservativePass"+idxStr)) params.conservativePass = cfg.getBool("conservativePass"+idxStr);
-    else if(cfg.contains("conservativePass"))   params.conservativePass = cfg.getBool("conservativePass");
-    else                                        params.conservativePass = false;
     //Controlled by GTP directly, not used in any other mode
     if(cfg.contains("wideRootNoise"+idxStr)) params.wideRootNoise = cfg.getDouble("wideRootNoise"+idxStr, 0.0, 5.0);
     else if(cfg.contains("wideRootNoise"))   params.wideRootNoise = cfg.getDouble("wideRootNoise", 0.0, 5.0);
@@ -687,23 +684,13 @@ Rules Setup::loadSingleRules(
   Rules rules;
 
   if(cfg.contains("rules")) {
-    if(cfg.contains("koRule")) throw StringError("Cannot both specify 'rules' and individual rules like koRule");
-    if(cfg.contains("multiStoneSuicideLegal")) throw StringError("Cannot both specify 'rules' and individual rules like multiStoneSuicideLegal");
-    if(cfg.contains("hasButton")) throw StringError("Cannot both specify 'rules' and individual rules like hasButton");
     if(cfg.contains("taxRule")) throw StringError("Cannot both specify 'rules' and individual rules like taxRule");
-    if(cfg.contains("friendlyPassOk")) throw StringError("Cannot both specify 'rules' and individual rules like friendlyPassOk");
 
     rules = Rules::parseRules(cfg.getString("rules"));
   }
   else {
-    string koRule = cfg.getString("koRule", Rules::koRuleStrings());
-    bool multiStoneSuicideLegal = cfg.getBool("multiStoneSuicideLegal");
-    bool hasButton = cfg.contains("hasButton") ? cfg.getBool("hasButton") : false;
     float komi = 7.5f;
 
-    rules.koRule = Rules::parseKoRule(koRule);
-    rules.multiStoneSuicideLegal = multiStoneSuicideLegal;
-    rules.hasButton = hasButton;
     rules.komi = komi;
 
     if(cfg.contains("taxRule")) {
@@ -715,13 +702,6 @@ Rules Setup::loadSingleRules(
     }
 
  
-    if(cfg.contains("friendlyPassOk")) {
-      rules.friendlyPassOk = cfg.getBool("friendlyPassOk");
-    }
-
-    //Drop default komi to 6.5 for territory rules, and to 7.0 for button
-    if(rules.hasButton)
-      rules.komi = 7.0f;
   }
 
   if(loadKomi) {
@@ -759,7 +739,7 @@ bool Setup::loadDefaultBoardXYSize(
 vector<pair<set<string>,set<string>>> Setup::getMutexKeySets() {
   vector<pair<set<string>,set<string>>> mutexKeySets = {
     std::make_pair<set<string>,set<string>>(
-    {"rules"},{"koRule","multiStoneSuicideLegal","taxRule","hasButton","friendlyPassOk"}
+    {"rules"},{"taxRule"}
     ),
   };
   return mutexKeySets;
