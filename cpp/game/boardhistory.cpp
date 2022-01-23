@@ -293,8 +293,8 @@ void BoardHistory::maybeFinishGame(Board& board)
   if (int(rules.komi + 0.5) == rules.komi + 0.5)//half komi, no draw
   {
     int passBound = rules.komi - 0.5;
-    if (board.numBlackCaptures >= CAPTURES_TO_WIN)setWinner(P_WHITE);
-    if (board.numWhiteCaptures >= CAPTURES_TO_WIN)setWinner(P_BLACK);
+    if (board.numBlackCaptures >= CAPTURES_TO_WIN)setWinner(P_BLACK);
+    if (board.numWhiteCaptures >= CAPTURES_TO_WIN)setWinner(P_WHITE);
     if (board.numBlackPasses > -passBound && board.numBlackPasses > 0)setWinner(P_WHITE);
     if (board.numWhitePasses > passBound && board.numWhitePasses > 0)setWinner(P_BLACK);
   }
@@ -302,9 +302,9 @@ void BoardHistory::maybeFinishGame(Board& board)
   {
     if (rules.komi >= 1)//white can pass
     {
-      if (board.numWhiteCaptures >= CAPTURES_TO_WIN)setWinner(P_BLACK);
+      if (board.numBlackCaptures >= CAPTURES_TO_WIN)setWinner(P_BLACK);
       int drawPassNum = rules.komi;
-      if (board.numBlackCaptures >= CAPTURES_TO_WIN)
+      if (board.numWhiteCaptures >= CAPTURES_TO_WIN)
       {
         if (board.numWhitePasses >= drawPassNum)setWinner(C_EMPTY);
         else setWinner(P_WHITE);
@@ -314,9 +314,9 @@ void BoardHistory::maybeFinishGame(Board& board)
     }
     else
     {
-      if (board.numBlackCaptures >= CAPTURES_TO_WIN)setWinner(P_WHITE);
+      if (board.numWhiteCaptures >= CAPTURES_TO_WIN)setWinner(P_WHITE);
       int drawPassNum = 1-rules.komi;
-      if (board.numWhiteCaptures >= CAPTURES_TO_WIN)
+      if (board.numBlackCaptures >= CAPTURES_TO_WIN)
       {
         if (board.numBlackPasses >= drawPassNum)setWinner(C_EMPTY);
         else setWinner(P_BLACK);

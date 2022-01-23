@@ -11,10 +11,13 @@
 #include "../core/hash.h"
 #include "../external/nlohmann_json/json.hpp"
 
-static const int CAPTURES_TO_WIN = 5;
+//反吃子棋（不围棋）true，吃子棋false
+static const bool ANTI_CAPTURE = false;
+//吃几个赢
+static const int CAPTURES_TO_WIN = 1;
 
 #ifndef COMPILE_MAX_BOARD_LEN
-#define COMPILE_MAX_BOARD_LEN 14
+#define COMPILE_MAX_BOARD_LEN 9
 #endif
 
 //TYPES AND CONSTANTS-----------------------------------------------------------------

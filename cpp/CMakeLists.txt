@@ -207,27 +207,7 @@ add_executable(katago
   program/play.cpp
   program/selfplaymanager.cpp
   ${GIT_HEADER_FILE_ALWAYS_UPDATED}
-  tests/testboardarea.cpp
-  tests/testboardbasic.cpp
   tests/testcommon.cpp
-  tests/testnnevalcanary.cpp
-  tests/testrules.cpp
-  tests/testscore.cpp
-  tests/testsgf.cpp
-  tests/testsymmetries.cpp
-  tests/testnninputs.cpp
-  tests/testownership.cpp
-  tests/testsearchcommon.cpp
-  tests/testsearchnonn.cpp
-  tests/testsearch.cpp
-  tests/testsearchv3.cpp
-  tests/testsearchv8.cpp
-  tests/testsearchmisc.cpp
-  tests/testtime.cpp
-  tests/testtrainingwrite.cpp
-  tests/testnn.cpp
-  tests/tinymodel.cpp
-  tests/tinymodeldata.cpp
   distributed/client.cpp
   command/commandline.cpp
   command/analysis.cpp
@@ -240,7 +220,6 @@ add_executable(katago
   command/match.cpp
   command/matchauto.cpp
   command/misc.cpp
-  command/runtests.cpp
   command/sandbox.cpp
   command/selfplay.cpp
   command/tune.cpp
