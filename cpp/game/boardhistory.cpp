@@ -290,21 +290,32 @@ void BoardHistory::makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player mo
 
 void BoardHistory::maybeFinishGame(Board& board)
 {
-  if (int(rules.komi + 0.5) == rules.komi + 0.5)//half komi, no draw
+  int blackCaptures = board.numBlackCaptures;
+  int whiteCaptures = board.numWhiteCaptures;
+  float komi = rules.komi;
+  if (ANTI_CAPTURE)//反吃子棋（不围棋）,交换
   {
-    int passBound = rules.komi - 0.5;
-    if (board.numBlackCaptures >= CAPTURES_TO_WIN)setWinner(P_BLACK);
-    if (board.numWhiteCaptures >= CAPTURES_TO_WIN)setWinner(P_WHITE);
+    int tmp = blackCaptures;
+    blackCaptures = whiteCaptures;
+    whiteCaptures = tmp;
+  }
+
+
+  if (int(komi + 0.5) == komi + 0.5)//half komi, no draw
+  {
+    int passBound = komi - 0.5;
+    if (blackCaptures >= CAPTURES_TO_WIN)setWinner(P_WHITE);
+    if (whiteCaptures >= CAPTURES_TO_WIN)setWinner(P_BLACK);
     if (board.numBlackPasses > -passBound && board.numBlackPasses > 0)setWinner(P_WHITE);
     if (board.numWhitePasses > passBound && board.numWhitePasses > 0)setWinner(P_BLACK);
   }
-  else if (int(rules.komi) == rules.komi)
+  else if (int(komi) == komi)
   {
-    if (rules.komi >= 1)//white can pass
+    if (komi >= 1)//white can pass
     {
-      if (board.numBlackCaptures >= CAPTURES_TO_WIN)setWinner(P_BLACK);
-      int drawPassNum = rules.komi;
-      if (board.numWhiteCaptures >= CAPTURES_TO_WIN)
+      if (whiteCaptures >= CAPTURES_TO_WIN)setWinner(P_BLACK);
+      int drawPassNum = komi;
+      if (blackCaptures >= CAPTURES_TO_WIN)
       {
         if (board.numWhitePasses >= drawPassNum)setWinner(C_EMPTY);
         else setWinner(P_WHITE);
@@ -314,9 +325,9 @@ void BoardHistory::maybeFinishGame(Board& board)
     }
     else
     {
-      if (board.numWhiteCaptures >= CAPTURES_TO_WIN)setWinner(P_WHITE);
-      int drawPassNum = 1-rules.komi;
-      if (board.numBlackCaptures >= CAPTURES_TO_WIN)
+      if (blackCaptures >= CAPTURES_TO_WIN)setWinner(P_WHITE);
+      int drawPassNum = 1-komi;
+      if (whiteCaptures >= CAPTURES_TO_WIN)
       {
         if (board.numBlackPasses >= drawPassNum)setWinner(C_EMPTY);
         else setWinner(P_BLACK);

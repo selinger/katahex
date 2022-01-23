@@ -857,14 +857,20 @@ void NNInputs::fillRowV7(
 
   //whether I can pass
   int myPasses = nextPlayer == C_BLACK ? board.numBlackPasses : board.numWhitePasses;
-  rowGlobal[13] = selfKomi >= myPasses+1;
+  if (ANTI_CAPTURE)
+  {
+    rowGlobal[14] =nextPlayer == C_BLACK ?1.0:0.0;
+    rowGlobal[13] = selfKomi > myPasses;
+  }
+  else
+    rowGlobal[13] = nextPlayer == C_BLACK ? selfKomi >= myPasses : selfKomi >= myPasses + 1;
 
   //Tax
   if(hist.rules.taxRule == Rules::TAX_NONE) {}
   else if(hist.rules.taxRule == Rules::TAX_SEKI)
-    rowGlobal[14] = 1.0f;
+    rowGlobal[15] = 1.0f;
   else if(hist.rules.taxRule == Rules::TAX_ALL) {\
-    rowGlobal[14] = 2.0f;
+    rowGlobal[15] = 2.0f;
   }
   else
     ASSERT_UNREACHABLE;

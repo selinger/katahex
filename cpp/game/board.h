@@ -12,7 +12,7 @@
 #include "../external/nlohmann_json/json.hpp"
 
 //反吃子棋（不围棋）true，吃子棋false
-static const bool ANTI_CAPTURE = false;
+static const bool ANTI_CAPTURE = true;
 //吃几个赢
 static const int CAPTURES_TO_WIN = 1;
 
