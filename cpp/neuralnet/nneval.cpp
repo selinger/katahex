@@ -514,6 +514,7 @@ void NNEvaluator::serve(
       }
 
       for(int row = 0; row<numRows; row++) {
+        int isWhite=int(buf.resultBufs[row]->rowGlobal[0]);
         if(buf.resultBufs[row]->symmetry == NNInputs::SYMMETRY_NOTSPECIFIED) {
           if(doRandomize)
             buf.resultBufs[row]->symmetry = rand.nextUInt(SymmetryHelpers::NUM_SYMMETRIES);
@@ -522,6 +523,8 @@ void NNEvaluator::serve(
             buf.resultBufs[row]->symmetry = defaultSymmetry;
           }
         }
+        if (isWhite)buf.resultBufs[row]->symmetry |= 4;//°×Æå·­×ª
+        else buf.resultBufs[row]->symmetry &= 3;//ºÚÆå²»·­×ª
       }
 
       NeuralNet::getOutput(gpuHandle, buf.inputBuffers, numRows, buf.resultBufs, outputBuf);

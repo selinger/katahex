@@ -5,6 +5,11 @@ using namespace std;
 int NNPos::xyToPos(int x, int y, int nnXLen) {
   return y * nnXLen + x;
 }
+int NNPos::symmetryPos(int pos, int nnXLen) {
+  int x = pos % nnXLen;
+  int y = pos / nnXLen;
+  return NNPos::xyToPos(y,x,nnXLen);
+}
 int NNPos::locToPos(Loc loc, int boardXSize, int nnXLen, int nnYLen) {
   if(loc == Board::PASS_LOC)
     return nnXLen * nnYLen;
@@ -69,88 +74,6 @@ double ScoreValue::getScoreStdev(double scoreMean, double scoreMeanSq) {
   return sqrt(variance);
 }
 
-//-----------------------------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------------------------
-
-void NNInputs::fillScoring(
-  const Board& board,
-  const Color* area,
-  bool groupTax,
-  float* scoring
-) {
-  if(!groupTax) {
-    std::fill(scoring, scoring + Board::MAX_ARR_SIZE, 0.0f);
-    for(int y = 0; y<board.y_size; y++) {
-      for(int x = 0; x<board.x_size; x++) {
-        Loc loc = Location::getLoc(x,y,board.x_size);
-        Color areaColor = area[loc];
-        if(areaColor == P_BLACK)
-          scoring[loc] = -1.0f;
-        else if(areaColor == P_WHITE)
-          scoring[loc] = 1.0f;
-        else {
-          assert(areaColor == C_EMPTY);
-          scoring[loc] = 0;
-        }
-      }
-    }
-  }
-  else {
-    bool visited[Board::MAX_ARR_SIZE];
-    Loc queue[Board::MAX_ARR_SIZE];
-
-    std::fill(visited, visited + Board::MAX_ARR_SIZE, false);
-    std::fill(scoring, scoring + Board::MAX_ARR_SIZE, 0.0f);
-    for(int y = 0; y<board.y_size; y++) {
-      for(int x = 0; x<board.x_size; x++) {
-        Loc loc = Location::getLoc(x,y,board.x_size);
-        if(visited[loc])
-          continue;
-        Color areaColor = area[loc];
-        if(areaColor == P_BLACK || areaColor == P_WHITE) {
-          float fullValue = areaColor == P_WHITE ? 1.0f : -1.0f;
-          int queueHead = 0;
-          int queueTail = 1;
-          queue[0] = loc;
-          visited[loc] = true;
-
-          //First, count how many empty or opp locations there are
-          int territoryCount = 0;
-          while(queueHead < queueTail) {
-            Loc next = queue[queueHead];
-            queueHead++;
-            if(board.colors[next] != areaColor)
-              territoryCount++;
-            //Push adjacent locations on to queue
-            for(int i = 0; i<4; i++) {
-              Loc adj = next + board.adj_offsets[i];
-              if(area[adj] == areaColor && !visited[adj]) {
-                queue[queueTail] = adj;
-                queueTail++;
-                visited[adj] = true;
-              }
-            }
-          }
-
-          //Then, actually fill values
-          float territoryValue = territoryCount <= 2 ? 0.0f : fullValue * (territoryCount - 2.0f) / territoryCount;
-          for(int j = 0; j<queueTail; j++) {
-            Loc next = queue[j];
-            queueHead++;
-            if(board.colors[next] != areaColor)
-              scoring[next] = territoryValue;
-            else
-              scoring[next] = fullValue;
-          }
-        }
-        else {
-          assert(areaColor == C_EMPTY);
-          scoring[loc] = 0;
-        }
-      }
-    }
-  }
-}
 
 
 //-----------------------------------------------------------------------------------------------------------
@@ -459,7 +382,7 @@ int SymmetryHelpers::compose(int firstSymmetry, int nextSymmetry, int nextNextSy
 }
 
 Loc SymmetryHelpers::getSymLoc(int x, int y, int xSize, int ySize, int symmetry) {
-  bool transpose = (symmetry & 0x4) != 0;
+  bool transpose = false;
   bool flipX = (symmetry & 0x2) != 0;
   bool flipY = (symmetry & 0x2) != 0;
   if(flipX) { x = xSize - x - 1; }
@@ -697,55 +620,14 @@ void NNInputs::fillRowV7(
       setRowBin(rowBin,pos,6, 1.0f, posStride, featureStride);
     }
   
-  //Hide history from the net if a pass would end things and we're behaving as if a pass won't.
-  //Or if the game is in fact over right now!
-  bool hideHistory =
-    hist.isGameFinished;
-
-  //Features 9,10,11,12,13
-  if(!hideHistory) {
-    const vector<Move>& moveHistory = hist.moveHistory;
-    size_t moveHistoryLen = moveHistory.size();
-    int numTurnsThisPhase = moveHistoryLen ;
-
-    if(numTurnsThisPhase >= 1 && moveHistory[moveHistoryLen-1].pla == opp) {
-      Loc prev1Loc = moveHistory[moveHistoryLen-1].loc;
-      if(prev1Loc == Board::PASS_LOC)
-        rowGlobal[0] = 1.0;
-      else if(prev1Loc != Board::NULL_LOC) {
-        int pos = NNPos::locToPos(prev1Loc,xSize,nnXLen,nnYLen);
-        setRowBin(rowBin,pos,9, 1.0f, posStride, featureStride);
-      }
-      if(numTurnsThisPhase >= 2 && moveHistory[moveHistoryLen-2].pla == pla) {
-        Loc prev2Loc = moveHistory[moveHistoryLen-2].loc;
-        if(prev2Loc == Board::PASS_LOC)
-          rowGlobal[1] = 1.0;
-        else if(prev2Loc != Board::NULL_LOC) {
-          int pos = NNPos::locToPos(prev2Loc,xSize,nnXLen,nnYLen);
-          setRowBin(rowBin,pos,10, 1.0f, posStride, featureStride);
-        }
-      }
-    }
-  }
-
-  //Ladder features 14,15,16,17
-  auto addLadderFeature = [&board,xSize,nnXLen,nnYLen,posStride,featureStride,rowBin,opp](Loc loc, int pos, const vector<Loc>& workingMoves){
-    assert(board.colors[loc] == P_BLACK || board.colors[loc] == P_WHITE);
-    assert(pos >= 0 && pos < NNPos::MAX_BOARD_AREA);
-    setRowBin(rowBin,pos,14, 1.0f, posStride, featureStride);
-    if(board.colors[loc] == opp && board.getNumLiberties(loc) > 1) {
-      for(size_t j = 0; j < workingMoves.size(); j++) {
-        int workingPos = NNPos::locToPos(workingMoves[j],xSize,nnXLen,nnYLen);
-        setRowBin(rowBin,workingPos,17, 1.0f, posStride, featureStride);
-      }
-    }
-  };
-
 
 
 
   //Global features.
-  //The first 5 of them were set already above to flag which of the past 5 moves were passes.
+  
+  //The first one determines the symmetry
+  //°×Æåxy×ªÖÃ£¬ºÚÆå²»×ªÖÃ
+  rowGlobal[0] = nextPlayer == C_WHITE ?1.0:0.0;
 
   //Komi and any score adjustments
   float selfKomi = hist.currentSelfKomi(nextPlayer,nnInputParams.drawEquivalentWinsForWhite);
