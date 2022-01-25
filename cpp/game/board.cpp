@@ -1481,14 +1481,16 @@ string Location::toStringMach(Loc loc, int x_size)
     return string("pass");
   if(loc == Board::NULL_LOC)
     return string("null");
+  int x = getX(loc, x_size), y = getY(loc, x_size);
+  int x_print = 2 * x + y+1, y_print = 2 * y+1;
   char buf[128];
-  sprintf(buf,"(%d,%d)",getX(loc,x_size),getY(loc,x_size));
+  sprintf(buf,"(%d,%d)",x_print,y_print);
   return string(buf);
 }
 
 string Location::toString(Loc loc, int x_size, int y_size)
 {
-  if(x_size > 25*25)
+  if(x_size > 25*5||y_size > 25*5)
     return toStringMach(loc,x_size);
   if(loc == Board::PASS_LOC)
     return string("pass");
@@ -1500,11 +1502,13 @@ string Location::toString(Loc loc, int x_size, int y_size)
   if(x >= x_size || x < 0 || y < 0 || y >= y_size)
     return toStringMach(loc,x_size);
 
+  int x_print = 2 * x + y+1, y_print = 2 * y+1, y_size_print = y_size * 2 + 1;
+
   char buf[128];
-  if(x <= 24)
-    sprintf(buf,"%c%d",xChar[x],y_size-y);
+  if(x_print <= 24)
+    sprintf(buf,"%c%d",xChar[x_print],y_size_print-y_print);
   else
-    sprintf(buf,"%c%c%d",xChar[x/25-1],xChar[x%25],y_size-y);
+    sprintf(buf,"%c%c%d",xChar[x_print/25-1],xChar[x_print%25],y_size_print-y_print);
   return string(buf);
 }
 
@@ -1551,6 +1555,12 @@ bool Location::tryOfString(const string& str, int x_size, int y_size, Loc& resul
     bool sucY = Global::tryStringToInt(pieces[1],y);
     if(!sucX || !sucY)
       return false;
+    if (y % 2 == 0)return false;
+    y = (y-1) / 2;
+    if ((x-y) % 2 == 0)return false;
+    x = (x - y-1) / 2;
+    if(x < 0 || y < 0 || x >= x_size || y >= y_size)
+      return false;
     result = Location::getLoc(x,y,x_size);
     return true;
   }
@@ -1576,6 +1586,12 @@ bool Location::tryOfString(const string& str, int x_size, int y_size, Loc& resul
     if(!sucY)
       return false;
     y = y_size - y;
+
+    if (y % 2 == 0)return false;
+    y = (y-1) / 2;
+    if ((x-y) % 2 == 0)return false;
+    x = (x - y-1) / 2;
+
     if(x < 0 || y < 0 || x >= x_size || y >= y_size)
       return false;
     result = Location::getLoc(x,y,x_size);

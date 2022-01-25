@@ -17,7 +17,7 @@ static const bool ANTI_CAPTURE = false;
 static const int CAPTURES_TO_WIN = 1;
 
 #ifndef COMPILE_MAX_BOARD_LEN
-#define COMPILE_MAX_BOARD_LEN 14
+#define COMPILE_MAX_BOARD_LEN 19
 #endif
 
 //TYPES AND CONSTANTS-----------------------------------------------------------------
