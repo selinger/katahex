@@ -123,7 +123,7 @@ void Search::maybeApplyAntiMirrorPolicy(
       Loc centerLoc = Location::getCenterLoc(xSize,ySize);
       if(centerLoc != Board::NULL_LOC) {
         if(rootBoard.colors[centerLoc] == getOpp(movePla)) {
-          if(thread->board.isAdjacentToChain(moveLoc,centerLoc))
+          if(false)
             weight = 0.05;
           else {
             int distanceSq = Location::euclideanDistanceSquared(moveLoc,centerLoc,xSize);
@@ -227,11 +227,7 @@ void Search::maybeApplyAntiMirrorForcedExplore(
   else if(movePla == rootPla && moveLoc != Board::PASS_LOC) {
     double proportionToDump = 0.0;
     if(isDifficult) {
-      if(thread->board.isAdjacentToChain(moveLoc,centerLoc)) {
-        childUtility += (parent.nextPla == P_WHITE ? 0.75 : -0.75) / (1.0 + thread->board.getNumLiberties(centerLoc))
-          / std::max(1.0,mirrorCenterSymmetryError) * std::max(0.3, 1.0 - 0.7 * parentUtility * parentUtility);
-        proportionToDump = 0.10 / thread->board.getNumLiberties(centerLoc);
-      }
+     
       int distanceSq = Location::euclideanDistanceSquared(moveLoc,centerLoc,xSize);
       if(distanceSq <= 2)
         proportionToDump = std::max(proportionToDump, 0.010);

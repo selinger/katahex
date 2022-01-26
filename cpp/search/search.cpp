@@ -171,7 +171,6 @@ void Search::setPlayerAndClearHistory(Player pla) {
   clearSearch();
   rootPla = pla;
   plaThatSearchIsFor = C_EMPTY;
-  rootBoard.clearSimpleKoLoc();
   Rules rules = rootHistory.rules;
   //Preserve this value even when we get multiple moves in a row by some player
   rootHistory.clear(rootBoard,rootPla,rules);
@@ -276,7 +275,6 @@ bool Search::isLegalTolerant(Loc moveLoc, Player movePla) const {
   //clear the ko loc - the simple ko loc of a player should not prohibit the opponent playing there!
   if(movePla != rootPla) {
     Board copy = rootBoard;
-    copy.clearSimpleKoLoc();
     return copy.isLegal(moveLoc,movePla,multiStoneSuicideLegal);
   }
   else {

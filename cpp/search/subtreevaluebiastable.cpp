@@ -63,9 +63,6 @@ std::shared_ptr<SubtreeValueBiasEntry> SubtreeValueBiasTable::get(Player pla, Lo
   Hash128 hash = ZOBRIST_MOVE_LOCS[parentPrevMoveLoc][0] ^ ZOBRIST_MOVE_LOCS[prevMoveLoc][1];
 
   hash ^= patternHasher.getHash(prevBoard,prevMoveLoc,pla);
-  if(prevBoard.ko_loc != Board::NULL_LOC) {
-    hash ^= ZOBRIST_KO_BAN[prevBoard.ko_loc];
-  }
 
   auto subMapIdx = hash.hash0 % entries.size();
 

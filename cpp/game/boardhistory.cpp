@@ -153,8 +153,6 @@ void BoardHistory::printBasicInfo(ostream& out, const Board& board) const {
   Board::printBoard(out, board, Board::NULL_LOC, &moveHistory);
   out << "Next player: " << PlayerIO::playerToString(presumedNextMovePla) << endl;
   out << "Rules: " << rules.toJsonString() << endl;
-  out << "B stones captured: " << board.numBlackCaptures << endl;
-  out << "W stones captured: " << board.numWhiteCaptures << endl;
 }
 
 void BoardHistory::printDebugInfo(ostream& out, const Board& board) const {
@@ -234,7 +232,6 @@ void BoardHistory::setWinner(Player pla)
 bool BoardHistory::isLegal(const Board& board, Loc moveLoc, Player movePla) const {
   //Ko-moves in the encore that are recapture blocked are interpreted as pass-for-ko, so they are legal
 
-  if (board.isKoBanned(moveLoc))return false;
   if(!board.isLegalIgnoringKo(moveLoc,movePla,false))
     return false;
 
@@ -244,8 +241,6 @@ bool BoardHistory::isLegal(const Board& board, Loc moveLoc, Player movePla) cons
 
 bool BoardHistory::isLegalTolerant(const Board& board, Loc moveLoc, Player movePla) const {
   bool multiStoneSuicideLegal = true; //Tolerate suicide regardless of rules
-  if( board.isKoBanned(moveLoc))
-    return false;
   if(!board.isLegalIgnoringKo(moveLoc,movePla,multiStoneSuicideLegal))
     return false;
   return true;
@@ -253,8 +248,6 @@ bool BoardHistory::isLegalTolerant(const Board& board, Loc moveLoc, Player moveP
 
 bool BoardHistory::makeBoardMoveTolerant(Board& board, Loc moveLoc, Player movePla) {
   bool multiStoneSuicideLegal = true; //Tolerate suicide regardless of rules
-  if(board.isKoBanned(moveLoc))
-    return false;
   if(!board.isLegalIgnoringKo(moveLoc,movePla,multiStoneSuicideLegal))
     return false;
   makeBoardMoveAssumeLegal(board,moveLoc,movePla);
@@ -290,53 +283,8 @@ void BoardHistory::makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player mo
 
 void BoardHistory::maybeFinishGame(Board& board)
 {
-  int blackCaptures = board.numBlackCaptures;
-  int whiteCaptures = board.numWhiteCaptures;
-  float komi = rules.komi;
-  if (ANTI_CAPTURE)//反吃子棋（不围棋）,交换
-  {
-    int tmp = blackCaptures;
-    blackCaptures = whiteCaptures;
-    whiteCaptures = tmp;
-  }
-
-
-  if (int(komi + 0.5) == komi + 0.5)//half komi, no draw
-  {
-    int passBound = komi - 0.5;
-    if (blackCaptures >= CAPTURES_TO_WIN)setWinner(P_WHITE);
-    if (whiteCaptures >= CAPTURES_TO_WIN)setWinner(P_BLACK);
-    if (board.numBlackPasses > -passBound && board.numBlackPasses > 0)setWinner(P_WHITE);
-    if (board.numWhitePasses > passBound && board.numWhitePasses > 0)setWinner(P_BLACK);
-  }
-  else if (int(komi) == komi)
-  {
-    if (komi >= 1)//white can pass
-    {
-      if (whiteCaptures >= CAPTURES_TO_WIN)setWinner(P_BLACK);
-      int drawPassNum = komi;
-      if (blackCaptures >= CAPTURES_TO_WIN)
-      {
-        if (board.numWhitePasses >= drawPassNum)setWinner(C_EMPTY);
-        else setWinner(P_WHITE);
-      }
-      if (board.numWhitePasses > drawPassNum)setWinner(C_BLACK);
-      if (board.numBlackPasses > 0)setWinner(C_WHITE);
-    }
-    else
-    {
-      if (blackCaptures >= CAPTURES_TO_WIN)setWinner(P_WHITE);
-      int drawPassNum = 1-komi;
-      if (whiteCaptures >= CAPTURES_TO_WIN)
-      {
-        if (board.numBlackPasses >= drawPassNum)setWinner(C_EMPTY);
-        else setWinner(P_BLACK);
-      }
-      if (board.numBlackPasses > drawPassNum)setWinner(C_WHITE);
-      if (board.numWhitePasses > 0)setWinner(C_BLACK);
-    }
-  }
-  else std::cout << "invalid komi";
+  Color winner1 = board.checkWinner();
+  if (winner1 != C_EMPTY)setWinner(winner1);
 }
 
 
@@ -348,8 +296,6 @@ Hash128 BoardHistory::getSituationRulesAndKoHash(const Board& board, const Board
   Hash128 hash = board.pos_hash;
   hash ^= Board::ZOBRIST_PLAYER_HASH[nextPlayer];
 
-  if(board.ko_loc != Board::NULL_LOC)
-    hash ^= Board::ZOBRIST_KO_LOC_HASH[board.ko_loc];
 
   float selfKomi = hist.currentSelfKomi(nextPlayer,drawEquivalentWinsForWhite);
 

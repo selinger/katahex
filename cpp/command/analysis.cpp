@@ -1025,7 +1025,6 @@ int MainCmds::analysis(const vector<string>& args) {
         Player movePla = moveHistory[turnNumber].pla;
         Loc moveLoc = moveHistory[turnNumber].loc;
         if(movePla != nextPla) {
-          board.clearSimpleKoLoc();
           hist.clear(board,movePla,rules);
         }
 

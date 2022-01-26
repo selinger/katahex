@@ -550,7 +550,6 @@ int MainCmds::genbook(const vector<string>& args) {
     // Run some basic error checking
     if(
       targetHist.initialBoard.pos_hash != board.pos_hash ||
-      targetHist.initialBoard.ko_loc != board.ko_loc ||
       targetHist.initialPla != pla 
     ) {
       throw StringError("Target board history to add to book doesn't start from the same position");

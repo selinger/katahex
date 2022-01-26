@@ -428,13 +428,8 @@ Board SymmetryHelpers::getSymBoard(const Board& board, int symmetry) {
         std::swap(symX,symY);
       Loc symLoc = Location::getLoc(symX,symY,symBoard.x_size);
       symBoard.setStone(symLoc,board.colors[loc]);
-      if(loc == board.ko_loc)
-        symKoLoc = symLoc;
     }
   }
-  //Set only at the end because otherwise setStone clears it.
-  if(symKoLoc != Board::NULL_LOC)
-    symBoard.setSimpleKoLoc(symKoLoc);
   return symBoard;
 }
 
@@ -451,9 +446,6 @@ void SymmetryHelpers::markDuplicateMoveLocs(
   validSymmetries.reserve(SymmetryHelpers::NUM_SYMMETRIES);
   validSymmetries.push_back(0);
 
-  //The board should never be considered symmetric if any moves are banned by ko or superko
-  if(board.ko_loc != Board::NULL_LOC)
-    return;
 
   //If board has different sizes of x and y, we will not search symmetries involved with transpose.
   int symmetrySearchUpperBound = board.x_size == board.y_size ? SymmetryHelpers::NUM_SYMMETRIES : SymmetryHelpers::NUM_SYMMETRIES_WITHOUT_TRANSPOSE;
@@ -605,20 +597,9 @@ void NNInputs::fillRowV7(
       else if(stone == opp)
         setRowBin(rowBin,pos,2, 1.0f, posStride, featureStride);
 
-      if(stone == pla || stone == opp) {
-        int libs = board.getNumLiberties(loc);
-        if(libs == 1) setRowBin(rowBin,pos,3, 1.0f, posStride, featureStride);
-        else if(libs == 2) setRowBin(rowBin,pos,4, 1.0f, posStride, featureStride);
-        else if(libs == 3) setRowBin(rowBin,pos,5, 1.0f, posStride, featureStride);
-      }
     }
   }
 
-  //Feature 6 - ko-ban locations, including possibly superko.
-    if(board.ko_loc != Board::NULL_LOC) {
-      int pos = NNPos::locToPos(board.ko_loc,xSize,nnXLen,nnYLen);
-      setRowBin(rowBin,pos,6, 1.0f, posStride, featureStride);
-    }
   
 
 
@@ -637,35 +618,6 @@ void NNInputs::fillRowV7(
     selfKomi = bArea+1.0f;
   if(selfKomi < -bArea-1.0f)
     selfKomi = -bArea-1.0f;
-
-  int passDiff = board.numBlackPasses - board.numWhitePasses;
-  if (nextPlayer == C_BLACK)passDiff = -passDiff;
-  rowGlobal[2] = (selfKomi+passDiff)/20.0f;
-
-  int myRemainCaptures = CAPTURES_TO_WIN-( nextPlayer == C_BLACK ? board.numBlackCaptures : board.numWhiteCaptures);
-  int oppRemainCaptures = CAPTURES_TO_WIN-(nextPlayer == C_WHITE ? board.numBlackCaptures : board.numWhiteCaptures);
-  if (myRemainCaptures <= 0)std::cout << "myRemainCaptures" << myRemainCaptures;
-  if (oppRemainCaptures <= 0)std::cout << "oppRemainCaptures" << oppRemainCaptures;
-  rowGlobal[3] = myRemainCaptures/float(CAPTURES_TO_WIN);
-  rowGlobal[4] = myRemainCaptures >= 2;
-  rowGlobal[5] = myRemainCaptures >= 3;
-  rowGlobal[6] = myRemainCaptures >= 4;
-  rowGlobal[7] = myRemainCaptures >= 5;
-  rowGlobal[8] = oppRemainCaptures/float(CAPTURES_TO_WIN);
-  rowGlobal[9] = oppRemainCaptures >= 2;
-  rowGlobal[10] = oppRemainCaptures >= 3;
-  rowGlobal[11] = oppRemainCaptures >= 4;
-  rowGlobal[12] = oppRemainCaptures >= 5;
-
-  //whether I can pass
-  int myPasses = nextPlayer == C_BLACK ? board.numBlackPasses : board.numWhitePasses;
-  if (ANTI_CAPTURE)
-  {
-    rowGlobal[14] =nextPlayer == C_BLACK ?1.0:0.0;
-    rowGlobal[13] = selfKomi > myPasses;
-  }
-  else
-    rowGlobal[13] = nextPlayer == C_BLACK ? selfKomi >= myPasses : selfKomi >= myPasses + 1;
 
   //Tax
   if(hist.rules.taxRule == Rules::TAX_NONE) {}
@@ -688,7 +640,6 @@ void NNInputs::fillRowV7(
   }
 
 
-    rowGlobal[18] = (xSize*ySize) % 2;
   
 
 }

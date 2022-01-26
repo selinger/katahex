@@ -1327,6 +1327,18 @@ FinishedGameData* Play::runGame(
     }
   };
 
+  //random first move
+  
+  if(gameRand.nextBool(0.95))
+  {
+    int firstx = gameRand.nextUInt(board.x_size), firsty = gameRand.nextUInt(board.y_size);
+    Loc firstMove = Location::getLoc(firstx, firsty, board.x_size);
+    hist.makeBoardMoveAssumeLegal(board, firstMove, pla);
+    pla = getOpp(pla);
+  }
+
+
+
   if(playSettings.initGamesWithPolicy && otherGameProps.allowPolicyInit) {
     double proportionOfBoardArea = otherGameProps.isSgfPos ? playSettings.startPosesPolicyInitAreaProp : playSettings.policyInitAreaProp;
     if(proportionOfBoardArea > 0) {

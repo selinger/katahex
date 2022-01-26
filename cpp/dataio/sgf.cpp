@@ -646,7 +646,6 @@ void Sgf::iterAllUniquePositionsHelper(
             netStonesAdded++;
           board.setStone(buf[j].loc, buf[j].pla);
         }
-        board.clearSimpleKoLoc();
         //Clear history any time placements happen, but make sure we track the initial turn number.
         initialTurnNumber += (int)hist.moveHistory.size();
 
@@ -733,9 +732,6 @@ void Sgf::samplePositionIfUniqueHelper(
   //Hash based on position, player, and simple ko
   Hash128 situationHash = board.pos_hash;
   situationHash ^= Board::ZOBRIST_PLAYER_HASH[nextPla];
-  if(board.ko_loc != Board::NULL_LOC)
-    situationHash ^= Board::ZOBRIST_KO_LOC_HASH[board.ko_loc];
-
   if(hashComments)
     situationHash.hash0 += Hash::simpleHash(comments.c_str());
 
@@ -744,8 +740,6 @@ void Sgf::samplePositionIfUniqueHelper(
     if(hist.moveHistory.size() > 0) {
       const Board& prevBoard = hist.getRecentBoard(1);
       parentHash = prevBoard.pos_hash;
-      if(prevBoard.ko_loc != Board::NULL_LOC)
-        parentHash ^= Board::ZOBRIST_KO_LOC_HASH[prevBoard.ko_loc];
     }
     //Mix in a blended up hash of the previous board state to avoid zobrist cancellation, also swapping halves
     Hash128 mixed = Hash128(Hash::murmurMix(parentHash.hash1),Hash::splitMix64(parentHash.hash0));
