@@ -285,6 +285,7 @@ void BoardHistory::makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player mo
 void BoardHistory::maybeFinishGame(Board& board)
 {
   Color winner1 = board.checkWinner();
+  if (ANTI_HEX && winner1 != C_EMPTY)winner1 = getOpp(winner1);
   if (winner1 != C_EMPTY)setWinner(winner1);
 }
 
