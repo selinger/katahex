@@ -278,6 +278,7 @@ void BoardHistory::makeBoardMoveAssumeLegal(Board& board, Loc moveLoc, Player mo
   moveHistory.push_back(Move(moveLoc,movePla));
   presumedNextMovePla = getOpp(movePla);
 
+  if (moveLoc == Board::PASS_LOC)setWinner(getOpp(movePla));
   maybeFinishGame(board);
 }
 
