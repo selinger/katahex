@@ -435,7 +435,12 @@ void TrainingWriteBuffers::addRow(
     uniformPolicyTarget(policySize, rowPolicy + 1 * policySize);
     rowGlobal[28] = 0.0f;
   }
-  if(nextPlayer==C_WHITE)selfTransposeNCHW(rowPolicy, 1, 2, dataYLen, dataXLen);
+  if (nextPlayer == C_WHITE)
+  {
+    //注意，policy的size是H*W+1，还有pass
+    selfTransposeNCHW(rowPolicy, 1, 1, dataYLen, dataXLen);
+    selfTransposeNCHW(rowPolicy + 1 * policySize, 1, 1, dataYLen, dataXLen);
+  }
 
 
   //Fill td-like value targets
