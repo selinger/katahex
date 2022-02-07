@@ -14,7 +14,7 @@
 static const bool ANTI_HEX = false;
 
 #ifndef COMPILE_MAX_BOARD_LEN
-#define COMPILE_MAX_BOARD_LEN 19
+#define COMPILE_MAX_BOARD_LEN 13
 #endif
 
 //TYPES AND CONSTANTS-----------------------------------------------------------------

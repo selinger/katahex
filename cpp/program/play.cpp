@@ -1329,9 +1329,34 @@ FinishedGameData* Play::runGame(
 
   //random first move
   
-  if(gameRand.nextBool(0.95))
+  if(gameRand.nextBool(0.99))
   {
     int firstx = gameRand.nextUInt(board.x_size), firsty = gameRand.nextUInt(board.y_size);
+    if (gameRand.nextBool(0.8))//make game fair
+    {
+      while (1)
+      {
+        firstx = gameRand.nextUInt(board.x_size), firsty = gameRand.nextUInt(board.y_size);
+
+        Board boardCopy(board);
+        BoardHistory histCopy(hist);
+        Loc firstMove = Location::getLoc(firstx, firsty, board.x_size);
+        histCopy.makeBoardMoveAssumeLegal(boardCopy, firstMove, C_BLACK);
+
+        NNResultBuf nnbuf;
+        MiscNNInputParams nnInputParams;
+        botW->nnEvaluator->evaluate(boardCopy, histCopy, C_WHITE, nnInputParams, nnbuf, false, false);
+        std::shared_ptr<NNOutput> nnOutput = std::move(nnbuf.result);
+
+        double winrate = nnOutput->whiteWinProb;
+        double bias = 2 * winrate - 1;
+        if (bias < 0)bias = -bias;
+        double droprate = pow(bias, 2);
+        if (!gameRand.nextBool(droprate))break;
+      }
+    }
+
+
     Loc firstMove = Location::getLoc(firstx, firsty, board.x_size);
     hist.makeBoardMoveAssumeLegal(board, firstMove, pla);
     pla = getOpp(pla);
