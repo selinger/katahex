@@ -11,10 +11,10 @@
 #include "../core/hash.h"
 #include "../external/nlohmann_json/json.hpp"
 
-static const bool ANTI_HEX = true;
+static const bool ANTI_HEX = false;
 
 #ifndef COMPILE_MAX_BOARD_LEN
-#define COMPILE_MAX_BOARD_LEN 11
+#define COMPILE_MAX_BOARD_LEN 13
 #endif
 
 //TYPES AND CONSTANTS-----------------------------------------------------------------
