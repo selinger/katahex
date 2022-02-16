@@ -1351,7 +1351,9 @@ FinishedGameData* Play::runGame(
     if(gameRand.nextBool(0.99))
     {
       int firstx = gameRand.nextUInt(board.x_size), firsty = gameRand.nextUInt(board.y_size);
-      if (gameRand.nextBool(0.8))//make game fair
+      double makeOpeningFairRate = playSettings.forSelfPlay ? 0.8 : 0.99;
+      
+      if (gameRand.nextBool(makeOpeningFairRate))//make game fair
       {
         while (1)
         {
@@ -1370,7 +1372,8 @@ FinishedGameData* Play::runGame(
           double winrate = nnOutput->whiteWinProb;
           double bias = 2 * winrate - 1;
           if (bias < 0)bias = -bias;
-          double droprate = pow(bias, 2);
+          double dropPow=playSettings.forSelfPlay ? 2 : 0.5;
+          double droprate = pow(bias,dropPow);
           if (!gameRand.nextBool(droprate))break;
         }
       }
