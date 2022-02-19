@@ -1372,7 +1372,7 @@ FinishedGameData* Play::runGame(
           double winrate = nnOutput->whiteWinProb;
           double bias = 2 * winrate - 1;
           if (bias < 0)bias = -bias;
-          double dropPow=playSettings.forSelfPlay ? 2 : 0.5;
+          double dropPow=playSettings.forSelfPlay ? 0.7 : 0.2;
           double droprate = pow(bias,dropPow);
           if (!gameRand.nextBool(droprate))break;
         }
