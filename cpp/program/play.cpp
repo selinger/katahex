@@ -1351,7 +1351,7 @@ FinishedGameData* Play::runGame(
     if(gameRand.nextBool(0.99))
     {
       int firstx = gameRand.nextUInt(board.x_size), firsty = gameRand.nextUInt(board.y_size);
-      double makeOpeningFairRate = playSettings.forSelfPlay ? 0.8 : 0.99;
+      double makeOpeningFairRate = playSettings.forSelfPlay ? 0.9 : 0.99;
       
       if (gameRand.nextBool(makeOpeningFairRate))//make game fair
       {
@@ -1374,6 +1374,7 @@ FinishedGameData* Play::runGame(
           if (bias < 0)bias = -bias;
           double dropPow=playSettings.forSelfPlay ? 0.7 : 0.2;
           double droprate = pow(bias,dropPow);
+          droprate = std::min(droprate, 0.999);
           if (!gameRand.nextBool(droprate))break;
         }
       }
