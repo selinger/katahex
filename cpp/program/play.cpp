@@ -1348,40 +1348,37 @@ FinishedGameData* Play::runGame(
   }
   else //if HEX  平衡点概率大
   {
-    if(gameRand.nextBool(0.99))
+    double makeOpeningFairRate = playSettings.forSelfPlay ? 0.98: 1.0;
+
+    if (gameRand.nextBool(makeOpeningFairRate))//make game fair
     {
-      int firstx = gameRand.nextUInt(board.x_size), firsty = gameRand.nextUInt(board.y_size);
-      double makeOpeningFairRate = playSettings.forSelfPlay ? 0.9 : 0.99;
-      
-      if (gameRand.nextBool(makeOpeningFairRate))//make game fair
+      int firstx , firsty ;
+      while (1)
       {
-        while (1)
-        {
-          firstx = gameRand.nextUInt(board.x_size), firsty = gameRand.nextUInt(board.y_size);
+        firstx = gameRand.nextUInt(board.x_size), firsty = gameRand.nextUInt(board.y_size);
 
-          Board boardCopy(board);
-          BoardHistory histCopy(hist);
-          Loc firstMove = Location::getLoc(firstx, firsty, board.x_size);
-          histCopy.makeBoardMoveAssumeLegal(boardCopy, firstMove, C_BLACK);
-
-          NNResultBuf nnbuf;
-          MiscNNInputParams nnInputParams;
-          botW->nnEvaluator->evaluate(boardCopy, histCopy, C_WHITE, nnInputParams, nnbuf, false, false);
-          std::shared_ptr<NNOutput> nnOutput = std::move(nnbuf.result);
-
-          double winrate = nnOutput->whiteWinProb;
-          double bias = 2 * winrate - 1;
-          if (bias < 0)bias = -bias;
-          double dropPow=playSettings.forSelfPlay ? 0.7 : 0.2;
-          double droprate = pow(bias,dropPow);
-          droprate = std::min(droprate, 0.999);
-          if (!gameRand.nextBool(droprate))break;
-        }
-      }
-
+        Board boardCopy(board);
+        BoardHistory histCopy(hist);
         Loc firstMove = Location::getLoc(firstx, firsty, board.x_size);
-        hist.makeBoardMoveAssumeLegal(board, firstMove, pla);
-        pla = getOpp(pla);
+        histCopy.makeBoardMoveAssumeLegal(boardCopy, firstMove, C_BLACK);
+
+        NNResultBuf nnbuf;
+        MiscNNInputParams nnInputParams;
+        botW->nnEvaluator->evaluate(boardCopy, histCopy, C_WHITE, nnInputParams, nnbuf, false, false);
+        std::shared_ptr<NNOutput> nnOutput = std::move(nnbuf.result);
+
+        double winrate = nnOutput->whiteWinProb;
+        double bias = 2 * winrate - 1;
+        double dropPow=playSettings.forSelfPlay ? 6.0 : 20.0;
+        double acceptRate = pow(1-bias*bias,dropPow);
+        acceptRate = std::max(acceptRate, 0.005);
+        if (gameRand.nextBool(acceptRate))break;
+      }
+      
+
+      Loc firstMove = Location::getLoc(firstx, firsty, board.x_size);
+      hist.makeBoardMoveAssumeLegal(board, firstMove, pla);
+      pla = getOpp(pla);
       
     }
 
