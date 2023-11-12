@@ -152,7 +152,7 @@ void BoardHistory::setInitialTurnNumber(int n) {
 void BoardHistory::printBasicInfo(ostream& out, const Board& board) const {
   Board::printBoard(out, board, Board::NULL_LOC, &moveHistory);
   out << "Next player: " << PlayerIO::playerToString(presumedNextMovePla) << endl;
-  out << "Rules: " << rules.toJsonString() << endl;
+  // out << "Rules: " << rules.toJsonString() << endl;
 }
 
 void BoardHistory::printDebugInfo(ostream& out, const Board& board) const {

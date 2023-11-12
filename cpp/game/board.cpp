@@ -685,7 +685,7 @@ void Board::printBoard(ostream& out, const Board& board, Loc markLoc, const vect
     const char* xChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     out << "  ";
     for(int x = 0; x < board.x_size; x++) {
-      if(x <= 25) {
+      if(x < 26) {
         out << xChar[x];
         out << " ";
       }
