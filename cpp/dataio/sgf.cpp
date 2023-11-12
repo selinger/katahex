@@ -129,15 +129,22 @@ static Loc parseSgfLocOrPass(const string& s, int xSize, int ySize) {
 }
 
 static void writeSgfLoc(ostream& out, Loc loc, int xSize, int ySize) {
-  if(xSize >= 53 || ySize >= 53)
-    throw StringError("Writing coordinates for SGF files for board sizes >= 53 is not implemented");
-  if(loc == Board::PASS_LOC || loc == Board::NULL_LOC)
+  if(loc == Board::PASS_LOC) {
+    out << "pass";
     return;
+  }
+  if(loc == Board::NULL_LOC) {
+    return;
+  }
   int x = Location::getX(loc,xSize);
   int y = Location::getY(loc,xSize);
-  const char* chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  out << chars[x];
-  out << chars[y];
+  const char* chars = "abcdefghijklmnopqrstuvwxyz";
+  if (x < 26) {
+    out << chars[x];
+  } else {
+    out << chars[x / 26 - 1] << chars[x % 26];
+  }
+  out << y+1;
 }
 
 bool SgfNode::hasProperty(const char* key) const {
@@ -1464,7 +1471,7 @@ void WriteSgf::writeSgf(
 
   int xSize = initialBoard.x_size;
   int ySize = initialBoard.y_size;
-  out << "(;FF[4]GM[1]";
+  out << "(;FF[4]GM[11]";
   if(xSize == ySize)
     out << "SZ[" << xSize << "]";
   else
@@ -1472,9 +1479,6 @@ void WriteSgf::writeSgf(
   out << "PB[" << bName << "]";
   out << "PW[" << wName << "]";
 
-
-  out << "KM[" << rules.komi << "]";
-  out << "RU[" << (tryNicerRulesString ? rules.toStringNoKomiMaybeNice() : rules.toStringNoKomi()) << "]";
   printGameResult(out,endHist);
 
   bool hasAB = false;
