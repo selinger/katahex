@@ -682,17 +682,17 @@ void Board::printBoard(ostream& out, const Board& board, Loc markLoc, const vect
   if(hist != NULL)
     out << "MoveNum: " << hist->size() << " ";
   out << "HASH: " << board.pos_hash << "\n";
-  bool showCoords = board.x_size <= 50 && board.y_size <= 50;
+  bool showCoords = true;
   if(showCoords) {
-    const char* xChar = "ABCDEFGHJKLMNOPQRSTUVWXYZ";
+    const char* xChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     out << "  ";
     for(int x = 0; x < board.x_size; x++) {
-      if(x <= 24) {
-        out << " ";
+      if(x <= 25) {
         out << xChar[x];
+        out << " ";
       }
       else {
-        out << "A" << xChar[x-25];
+        out << xChar[x / 26 - 1] << xChar[x % 26];
       }
     }
     out << "\n";
@@ -700,9 +700,12 @@ void Board::printBoard(ostream& out, const Board& board, Loc markLoc, const vect
 
   for(int y = 0; y < board.y_size; y++)
   {
+    for (int i=0; i<y; i++) {
+      out << ' ';
+    }
     if(showCoords) {
       char buf[16];
-      sprintf(buf,"%2d",board.y_size-y);
+      sprintf(buf,"%2d",y+1);
       out << buf << ' ';
     }
     for(int x = 0; x < board.x_size; x++)
