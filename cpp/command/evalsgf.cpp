@@ -41,7 +41,7 @@ int MainCmds::evalsgf(const vector<string>& args) {
   int printMaxDepth;
   bool rawNN;
   try {
-    KataGoCommandLine cmd("Run a search on a position from an sgf file, for debugging.");
+    KataHexCommandLine cmd("Run a search on a position from an sgf file, for debugging.");
     cmd.addConfigFileArg("","gtp_example.cfg");
     cmd.addModelFileArg();
 

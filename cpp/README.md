@@ -2,10 +2,10 @@
 
 Summary of source folders, in approximate dependency order, from lowest level to highest, along with a partial list of the most notable files in each directory.
 
-* `external` - External open-source libraries that KataGo depends on that are small or self-contained enough to just include inline with this repo.
+* `external` - External open-source libraries that KataHex depends on that are small or self-contained enough to just include inline with this repo.
 * `core` - Low-level utilities, sort of a layer on top of the standard library. Hashing, portable rand, string formatting and parsing, filesystem helpers, etc.
 * `game` - Board representation and rules.
-  * `rules.{cpp,h}` - Lightweight struct representing all the combinations of rules KataGo supports.
+  * `rules.{cpp,h}` - Lightweight struct representing all the combinations of rules KataHex supports.
   * `board.{cpp,h}` - Raw board implementation, without move history. Helper functions for Benson's algorithm and ladder search.
   * `boardhistory.{cpp,h}` - Datastructure that does include move history - handles superko, passing, game end, final scoring, komi, handicap detection, etc.
 * `neuralnet` - Neural net GPU implementation and interface. Contains both OpenCL and CUDA backends them.

@@ -21,7 +21,7 @@
 
 int MainCmds::contribute(const std::vector<std::string>& args) {
   (void)args;
-  std::cout << "This version of KataGo was NOT compiled with support for distributed training." << std::endl;
+  std::cout << "This version of KataHex was NOT compiled with support for distributed training." << std::endl;
   std::cout << "Compile with -DBUILD_DISTRIBUTED=1 in CMake, and/or see notes at https://github.com/lightvector/KataGo#compiling-katago" << std::endl;
   return 0;
 }
@@ -83,7 +83,7 @@ static void sigPipeHandlerDoNothing(int signal)
 
 //-----------------------------------------------------------------------------------------
 
-static const string defaultBaseDir = "katago_contribute";
+static const string defaultBaseDir = "katahex_contribute";
 static const double defaultDeleteUnusedModelsAfterDays = 30;
 
 namespace {
@@ -353,9 +353,9 @@ int MainCmds::contribute(const vector<string>& args) {
   string overrideUserConfig;
   string caCertsFile;
   try {
-    KataGoCommandLine cmd("Run KataGo to generate training data for distributed training");
+    KataHexCommandLine cmd("Run KataHex to generate training data for distributed training");
     TCLAP::ValueArg<string> baseDirArg(
-      "","base-dir","Directory to download models, write game results, etc. (default ./katago_contribute)",
+      "","base-dir","Directory to download models, write game results, etc. (default ./katahex_contribute)",
       false,defaultBaseDir,"DIR"
     );
     TCLAP::ValueArg<double> deleteUnusedModelsAfterDaysArg(
@@ -424,7 +424,7 @@ int MainCmds::contribute(const vector<string>& args) {
       possiblePaths.push_back(dir + "/cert.pem");
       possiblePaths.push_back(dir + "/tls-ca-bundle.pem");
     }
-    //In case someone's trying to run katago right out of the compiled github repo
+    //In case someone's trying to run katahex right out of the compiled github repo
     for(const string& dir: defaultFilesDirs) {
       possiblePaths.push_back(dir + "/external/mozilla-cacerts/cacert.pem");
     }
@@ -583,7 +583,7 @@ int MainCmds::contribute(const vector<string>& args) {
   logger.addFile(logsDir + "/log" + DateTime::getCompactDateTimeString() + "-" + Global::uint64ToHexString(seedRand.nextUInt64()) + ".log");
 
   //Write out versions now that the logger is all set up
-  logger.write(Version::getKataGoVersionForHelp());
+  logger.write(Version::getKataHexVersionForHelp());
   logger.write(string("Git revision: ") + Version::getGitRevision());
 
   {
@@ -630,7 +630,7 @@ int MainCmds::contribute(const vector<string>& args) {
       return true;
     if(shouldStopGracefully.load()) {
       if(!shouldStopGracefullyPrinted.exchange(true))
-        logger.write("Signal to stop (e.g. ctrl-c) detected, KataGo will shut down once all current games are finished. This may take quite a long time. Repeat a second time to stop without finishing current games.");
+        logger.write("Signal to stop (e.g. ctrl-c) detected, KataHex will shut down once all current games are finished. This may take quite a long time. Repeat a second time to stop without finishing current games.");
       return true;
     }
     return false;

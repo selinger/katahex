@@ -20,7 +20,7 @@ static void printHelp(const vector<string>& args) {
   if(args.size() >= 1)
     cout << "Usage: " << args[0] << " SUBCOMMAND ";
   else
-    cout << "Usage: " << "./katago" << " SUBCOMMAND ";
+    cout << "Usage: " << "./katahex" << " SUBCOMMAND ";
   cout << endl;
 
   cout << R"%%(
@@ -30,7 +30,7 @@ gtp : Runs GTP engine that can be plugged into any standard Go GUI for play/anal
 benchmark : Test speed with different numbers of search threads.
 genconfig : User-friendly interface to generate a config with rules and automatic performance tuning.
 
-contribute : Connect to online distributed KataGo training and run perpetually contributing selfplay games.
+contribute : Connect to online distributed KataHex training and run perpetually contributing selfplay games.
 
 match : Run self-play match games based on a config, more efficient than gtp due to batching.
 version : Print version and exit.
@@ -106,7 +106,7 @@ static int handleSubcommand(const string& subcommand, const vector<string>& args
   else if(subcommand == "sandbox")
     return MainCmds::sandbox();
   else if(subcommand == "version") {
-    cout << Version::getKataGoVersionFullInfo() << std::flush;
+    cout << Version::getKataHexVersionFullInfo() << std::flush;
     return 0;
   }
   else {
@@ -153,17 +153,17 @@ int main(int argc, const char* const* argv) {
 }
 
 
-string Version::getKataGoVersion() {
+string Version::getKataHexVersion() {
   return string("1.10.0");
 }
 
-string Version::getKataGoVersionForHelp() {
-  return string("KataGo v1.10.0");
+string Version::getKataHexVersionForHelp() {
+  return string("KataHex v1.10.0");
 }
 
-string Version::getKataGoVersionFullInfo() {
+string Version::getKataHexVersionFullInfo() {
   ostringstream out;
-  out << Version::getKataGoVersionForHelp() << endl;
+  out << Version::getKataHexVersionForHelp() << endl;
   out << "Git revision: " << Version::getGitRevision() << endl;
   out << "Compile Time: " << __DATE__ << " " << __TIME__ << endl;
 #if defined(USE_CUDA_BACKEND)

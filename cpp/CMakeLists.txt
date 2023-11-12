@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.18.2)
-project(katago)
+project(katahex)
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -33,11 +33,11 @@ set_property(CACHE USE_BACKEND PROPERTY STRINGS "" CUDA TENSORRT OPENCL EIGEN)
 set(USE_TCMALLOC 0 CACHE BOOL "Use TCMalloc")
 set(NO_GIT_REVISION 0 CACHE BOOL "Disable embedding the git revision into the compiled exe")
 set(USE_AVX2 0 CACHE BOOL "Compile with AVX2")
-set(USE_BIGGER_BOARDS_EXPENSIVE 0 CACHE BOOL "Allow boards up to size 29. Compiling with this will use more memory and slow down KataGo, even when playing on boards of size 19.")
+set(USE_BIGGER_BOARDS_EXPENSIVE 0 CACHE BOOL "Allow boards up to size 29. Compiling with this will use more memory and slow down KataHex, even when playing on boards of size 19.")
 
 #--------------------------- NEURAL NET BACKEND ------------------------------------------------------------------------
 
-message(STATUS "Building 'katago' executable for GTP engine and other tools.")
+message(STATUS "Building 'katahex' executable for GTP engine and other tools.")
 if(USE_BACKEND STREQUAL "CUDA")
   message(STATUS "-DUSE_BACKEND=CUDA, using CUDA backend.")
 
@@ -138,9 +138,9 @@ else()
     )
 endif()
 
-#--------------------------- KATAGO COMPILING AND LINKING --------------------------------------------------------------
+#--------------------------- KATAHEX COMPILING AND LINKING --------------------------------------------------------------
 
-add_executable(katago
+add_executable(katahex
   core/global.cpp
   core/base64.cpp
   core/bsearch.cpp
@@ -227,8 +227,8 @@ add_executable(katago
   )
 
 if(USE_BACKEND STREQUAL "CUDA")
-  target_compile_definitions(katago PRIVATE USE_CUDA_BACKEND)
-  target_compile_definitions(katago PRIVATE CUDA_TARGET_VERSION=${CMAKE_CUDA_COMPILER_VERSION})
+  target_compile_definitions(katahex PRIVATE USE_CUDA_BACKEND)
+  target_compile_definitions(katahex PRIVATE CUDA_TARGET_VERSION=${CMAKE_CUDA_COMPILER_VERSION})
   find_package(CUDAToolkit REQUIRED)
   find_path(CUDNN_INCLUDE_DIR cudnn.h HINTS ${CUDNN_ROOT_DIR} ${CUDAToolkit_INCLUDE_DIRS} PATH_SUFFIXES include)
   if((NOT CUDNN_INCLUDE_DIR))
@@ -236,9 +236,9 @@ if(USE_BACKEND STREQUAL "CUDA")
   endif()
   find_library(CUDNN_LIBRARY cudnn HINTS ${CUDNN_ROOT_DIR} ${CUDAToolkit_LIBRARY_DIR} PATH_SUFFIXES lib64)
   include_directories(SYSTEM ${CUDAToolkit_INCLUDE_DIRS} ${CUDNN_INCLUDE_DIR}) #SYSTEM is for suppressing some compiler warnings in thrust libraries
-  target_link_libraries(katago CUDA::cublas ${CUDNN_LIBRARY})
+  target_link_libraries(katahex CUDA::cublas ${CUDNN_LIBRARY})
 elseif(USE_BACKEND STREQUAL "TENSORRT")
-  target_compile_definitions(katago PRIVATE USE_TENSORRT_BACKEND)
+  target_compile_definitions(katahex PRIVATE USE_TENSORRT_BACKEND)
   find_package(CUDAToolkit REQUIRED)
   find_path(TENSORRT_INCLUDE_DIR NvInfer.h HINTS ${TENSORRT_ROOT_DIR} ${CUDAToolkit_INCLUDE_DIRS} PATH_SUFFIXES include)
   if((NOT TENSORRT_INCLUDE_DIR))
@@ -259,15 +259,15 @@ elseif(USE_BACKEND STREQUAL "TENSORRT")
     message(FATAL_ERROR "TensorRT 8.2 or greater is required but ${TENSORRT_VERSION} was found.")
   endif()
   include_directories(SYSTEM ${CUDAToolkit_INCLUDE_DIRS} ${TENSORRT_INCLUDE_DIR}) #SYSTEM is for suppressing some compiler warnings in thrust libraries
-  target_link_libraries(katago CUDA::cudart_static ${TENSORRT_LIBRARY})
+  target_link_libraries(katahex CUDA::cudart_static ${TENSORRT_LIBRARY})
 elseif(USE_BACKEND STREQUAL "OPENCL")
-  target_compile_definitions(katago PRIVATE USE_OPENCL_BACKEND)
+  target_compile_definitions(katahex PRIVATE USE_OPENCL_BACKEND)
   find_package(OpenCL REQUIRED)
   include_directories(${OpenCL_INCLUDE_DIRS})
   link_directories(${OpenCL_LIBRARY})
-  target_link_libraries (katago ${OpenCL_LIBRARY})
+  target_link_libraries (katahex ${OpenCL_LIBRARY})
 elseif(USE_BACKEND STREQUAL "EIGEN")
-  target_compile_definitions(katago PRIVATE USE_EIGEN_BACKEND)
+  target_compile_definitions(katahex PRIVATE USE_EIGEN_BACKEND)
   if(NOT (MSVC OR MINGW))
     find_package(Eigen3 REQUIRED)
     include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
@@ -280,7 +280,7 @@ elseif(USE_BACKEND STREQUAL "EIGEN")
       find_package(Eigen3)
       if(NOT Eigen3_FOUND)
         set(EIGEN3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIRS} CACHE PATH "Directory containing 'Eigen' and 'unsupported' subdirs with Eigen headers")
-        message(FATAL_ERROR "*** KataGo: Eigen3 was not found. If you've downloaded Eigen3, you can IGNORE the whole above error from CMake and just set 'EIGEN3_INCLUDE_DIRS' to the root eigen3-3.*.* directory after unzipping it. Among other things it should contain 'Eigen' and 'unsupported' subdirs, which is all KataGo needs. Otherwise, you will need to 'build' Eigen3 even though it is header-only and install it via MSVC in order for cmake to find it via FindEigen3.cmake.")
+        message(FATAL_ERROR "*** KataHex: Eigen3 was not found. If you've downloaded Eigen3, you can IGNORE the whole above error from CMake and just set 'EIGEN3_INCLUDE_DIRS' to the root eigen3-3.*.* directory after unzipping it. Among other things it should contain 'Eigen' and 'unsupported' subdirs, which is all KataHex needs. Otherwise, you will need to 'build' Eigen3 even though it is header-only and install it via MSVC in order for cmake to find it via FindEigen3.cmake.")
       else()
         include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
         message(STATUS "Found Eigen3 at ${EIGEN3_INCLUDE_DIRS}")
@@ -290,17 +290,17 @@ elseif(USE_BACKEND STREQUAL "EIGEN")
 endif()
 
 if(USE_BIGGER_BOARDS_EXPENSIVE)
-  target_compile_definitions(katago PRIVATE COMPILE_MAX_BOARD_LEN=29)
+  target_compile_definitions(katahex PRIVATE COMPILE_MAX_BOARD_LEN=29)
 endif()
 
 if(NO_GIT_REVISION AND (NOT BUILD_DISTRIBUTED))
-  target_compile_definitions(katago PRIVATE NO_GIT_REVISION)
+  target_compile_definitions(katahex PRIVATE NO_GIT_REVISION)
 endif()
 
 find_package(ZLIB)
 if(ZLIB_FOUND)
   include_directories(${ZLIB_INCLUDE_DIRS})
-  target_link_libraries(katago ${ZLIB_LIBRARIES})
+  target_link_libraries(katahex ${ZLIB_LIBRARIES})
 else()
   set(ZLIB_INCLUDE_DIR ${ZLIB_INCLUDE_DIR} CACHE PATH "Path to directory with zlib.h and other header files")
   set(ZLIB_LIBRARY ${ZLIB_LIBRARY} CACHE FILEPATH "Path to 'libz.so' on Linux or 'libz.lib' on Windows")
@@ -313,10 +313,10 @@ find_path(LIBZIP_INCLUDE_DIR_ZIP NAMES zip.h)
 find_path(LIBZIP_INCLUDE_DIR_ZIPCONF NAMES zipconf.h)
 if((NOT LIBZIP_LIBRARY) OR (NOT LIBZIP_INCLUDE_DIR_ZIP) OR (NOT LIBZIP_INCLUDE_DIR_ZIPCONF))
   if(BUILD_DISTRIBUTED)
-    message(SEND_ERROR "${ColorBoldRed}WARNING: BUILD_DISTRIBUTED was requested but libzip library was NOT found. KataGo needs this for writing training data so libzip is required. On Linux, install through your normal package manager. On Windows, set LIBZIP_INCLUDE_DIR_ZIP to the directory that includes zip.h and other files, and LIBZIP_INCLUDE_DIR_ZIPCONF to the directory that includes zipconf.h and other files, and LIBZIP_LIBRARY to the libzip.lib or zip.lib file. ${ColorReset}")
+    message(SEND_ERROR "${ColorBoldRed}WARNING: BUILD_DISTRIBUTED was requested but libzip library was NOT found. KataHex needs this for writing training data so libzip is required. On Linux, install through your normal package manager. On Windows, set LIBZIP_INCLUDE_DIR_ZIP to the directory that includes zip.h and other files, and LIBZIP_INCLUDE_DIR_ZIPCONF to the directory that includes zipconf.h and other files, and LIBZIP_LIBRARY to the libzip.lib or zip.lib file. ${ColorReset}")
   endif()
-  target_compile_definitions(katago PRIVATE NO_LIBZIP)
-  message(WARNING "${ColorBoldRed}WARNING: libzip library was NOT found. KataGo should still work for GTP/matches/analysis if everything else is good, but selfplay for writing training data will not be possible.${ColorReset}")
+  target_compile_definitions(katahex PRIVATE NO_LIBZIP)
+  message(WARNING "${ColorBoldRed}WARNING: libzip library was NOT found. KataHex should still work for GTP/matches/analysis if everything else is good, but selfplay for writing training data will not be possible.${ColorReset}")
   set(LIBZIP_INCLUDE_DIR_ZIP ${LIBZIP_INCLUDE_DIR_ZIP} CACHE PATH "Path to directory with zip.h and other header files")
   set(LIBZIP_INCLUDE_DIR_ZIPCONF ${LIBZIP_INCLUDE_DIR_ZIPCONF} CACHE PATH "Path to directory with zipconf.h and other header files")
   set(LIBZIP_LIBRARY ${LIBZIP_LIBRARY} CACHE FILEPATH "Path to 'libzip.so' on Linux or 'libzip.lib' or 'zip.lib' on Windows")
@@ -324,18 +324,18 @@ if((NOT LIBZIP_LIBRARY) OR (NOT LIBZIP_INCLUDE_DIR_ZIP) OR (NOT LIBZIP_INCLUDE_D
 else()
   include_directories(${LIBZIP_INCLUDE_DIR_ZIP})
   include_directories(${LIBZIP_INCLUDE_DIR_ZIPCONF})
-  target_link_libraries(katago ${LIBZIP_LIBRARY})
+  target_link_libraries(katahex ${LIBZIP_LIBRARY})
 endif()
 
 if(USE_TCMALLOC)
-  target_link_libraries(katago ${TCMALLOC_LIB})
+  target_link_libraries(katahex ${TCMALLOC_LIB})
 endif(USE_TCMALLOC)
 
 if(BUILD_DISTRIBUTED)
   message(STATUS "-DBUILD_DISTRIBUTED=1 is set, compiling code and dependencies to contribute to distributed training")
-  target_compile_definitions(katago PRIVATE BUILD_DISTRIBUTED)
+  target_compile_definitions(katahex PRIVATE BUILD_DISTRIBUTED)
   find_package(OpenSSL REQUIRED)
-  target_link_libraries(katago ${OPENSSL_SSL_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARIES})
+  target_link_libraries(katahex ${OPENSSL_SSL_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARIES})
   include_directories(${OPENSSL_INCLUDE_DIR})
   include_directories(external/httplib)
 endif()
@@ -348,16 +348,16 @@ if(MSVC)
   message(STATUS "Setting up build for MSVC.")
   # Suppress min and max macros on windows
   # Also define a few other things for windows
-  target_compile_definitions(katago PRIVATE NOMINMAX)
-  target_compile_definitions(katago PRIVATE BYTE_ORDER=1234)
-  target_compile_definitions(katago PRIVATE LITTLE_ENDIAN=1234)
-  target_compile_definitions(katago PRIVATE BIG_ENDIAN=4321)
+  target_compile_definitions(katahex PRIVATE NOMINMAX)
+  target_compile_definitions(katahex PRIVATE BYTE_ORDER=1234)
+  target_compile_definitions(katahex PRIVATE LITTLE_ENDIAN=1234)
+  target_compile_definitions(katahex PRIVATE BIG_ENDIAN=4321)
   # core/rand.cpp uses winsock for a gethostname
-  target_link_libraries(katago ws2_32)
+  target_link_libraries(katahex ws2_32)
 
   if(USE_AVX2)
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /arch:AVX2 -D__FMA__")
-    target_compile_definitions(katago PRIVATE USE_AVX2)
+    target_compile_definitions(katahex PRIVATE USE_AVX2)
   endif()
 
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8388608")
@@ -370,11 +370,11 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang
   endif()
   if(USE_AVX2)
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -mavx2 -mfma")
-    target_compile_definitions(katago PRIVATE USE_AVX2)
+    target_compile_definitions(katahex PRIVATE USE_AVX2)
   endif()
 
   find_package (Threads REQUIRED)
-  target_link_libraries(katago Threads::Threads)
+  target_link_libraries(katahex Threads::Threads)
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2 -pedantic -Wall -Wextra -Wno-sign-compare -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Wmissing-declarations -Wmissing-include-dirs -Woverloaded-virtual -Wredundant-decls -Wshadow -Wstrict-overflow=1 -Wswitch-default -Wfloat-conversion -Wunused")
 
@@ -390,7 +390,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang
   else()
     message(STATUS "Enabling Clang-specific build options.")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnull-dereference -Wdangling-else")
-    target_link_libraries(katago "atomic")
+    target_link_libraries(katahex "atomic")
   endif()
 
   if(USE_TCMALLOC)
@@ -400,5 +400,5 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang
 
 endif()
 
-target_include_directories(katago PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(katahex PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 

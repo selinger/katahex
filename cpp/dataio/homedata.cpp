@@ -30,9 +30,9 @@ vector<string> HomeData::getDefaultFilesDirs() {
   wchar_t buf[bufSize];
   DWORD length = GetModuleFileNameW(NULL, buf, bufSize);
   if(length <= 0) //failure
-    throw StringError("Could not find containing directory of KataGo executable");
+    throw StringError("Could not find containing directory of KataHex executable");
   if(length >= bufSize) //failure, path truncated
-    throw StringError("Could not get containing directory of KataGo executable, path is too long");
+    throw StringError("Could not get containing directory of KataHex executable, path is too long");
   // #if (NTDDI_VERSION >= NTDDI_WIN8)
   // PathCchRemoveFileSpec(buf, bufSize);
   // #else
@@ -50,7 +50,7 @@ vector<string> HomeData::getDefaultFilesDirs() {
 }
 
 string HomeData::getDefaultFilesDirForHelpMessage() {
-  return "(dir containing katago.exe)";
+  return "(dir containing katahex.exe)";
 }
 
 
@@ -66,9 +66,9 @@ string HomeData::getHomeDataDir(bool makeDir, const string& homeDataDirOverride)
   wchar_t buf[bufSize];
   DWORD length = GetModuleFileNameW(NULL, buf, bufSize);
   if(length <= 0) //failure
-    throw StringError("Could not access containing directory of KataGo executable");
+    throw StringError("Could not access containing directory of KataHex executable");
   if(length >= bufSize) //failure, path truncated
-    throw StringError("Could not get containing directory of KataGo executable, path is too long");
+    throw StringError("Could not get containing directory of KataHex executable, path is too long");
   // #if (NTDDI_VERSION >= NTDDI_WIN8)
   // PathCchRemoveFileSpec(buf, bufSize);
   // #else
@@ -80,7 +80,7 @@ string HomeData::getHomeDataDir(bool makeDir, const string& homeDataDirOverride)
   wcstombs_s(&ret, buf2, buf2Size, buf, buf2Size-1);
 
   string homeDataDir(buf2);
-  homeDataDir += "/KataGoData";
+  homeDataDir += "/KataHexData";
   if(makeDir) MakeDir::make(homeDataDir);
   return homeDataDir;
 }
@@ -89,7 +89,7 @@ string HomeData::getHomeDataDir(bool makeDir, const string& homeDataDirOverride)
 #ifdef OS_IS_UNIX_OR_APPLE
 //On Linux, this function returns two locations:
 //The directory containing the excutable.
-//A katago-specific subdirectory of the home directory, same as getHomeDataDir.
+//A katahex-specific subdirectory of the home directory, same as getHomeDataDir.
 vector<string> HomeData::getDefaultFilesDirs() {
   namespace gfs = ghc::filesystem;
   constexpr int bufSize = 2048;
@@ -107,7 +107,7 @@ vector<string> HomeData::getDefaultFilesDirs() {
 }
 
 string HomeData::getDefaultFilesDirForHelpMessage() {
-  return "(dir containing katago.exe, or else ~/.katago)";
+  return "(dir containing katahex.exe, or else ~/.katahex)";
 }
 
 string HomeData::getHomeDataDir(bool makeDir, const string& homeDataDirOverride) {
@@ -119,7 +119,7 @@ string HomeData::getHomeDataDir(bool makeDir, const string& homeDataDirOverride)
   string homeDataDir;
   const char* home =  getenv("HOME");
   if(home != NULL) {
-    homeDataDir = string(home) + "/.katago";
+    homeDataDir = string(home) + "/.katahex";
     if(makeDir) MakeDir::make(homeDataDir);
     return homeDataDir;
   }
@@ -138,13 +138,13 @@ string HomeData::getHomeDataDir(bool makeDir, const string& homeDataDirOverride)
   //Just make something in the current directory
   if(result == NULL) {
     delete[] buf;
-    homeDataDir = "./.katago";
+    homeDataDir = "./.katahex";
     if(makeDir) MakeDir::make(homeDataDir);
     return homeDataDir;
   }
   homeDataDir = string(result->pw_dir);
   delete[] buf;
-  homeDataDir += "/.katago";
+  homeDataDir += "/.katahex";
   if(makeDir) MakeDir::make(homeDataDir);
   return homeDataDir;
 }

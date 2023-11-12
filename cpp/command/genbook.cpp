@@ -55,7 +55,7 @@ int MainCmds::genbook(const vector<string>& args) {
   bool allowChangingBookParams;
   bool htmlDevMode;
   try {
-    KataGoCommandLine cmd("View startposes");
+    KataHexCommandLine cmd("View startposes");
     cmd.addConfigFileArg("","",true);
     cmd.addModelFileArg();
     cmd.addOverrideConfigArg();

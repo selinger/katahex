@@ -162,8 +162,8 @@ class KataHelpOutput : public TCLAP::StdOutput
 //--------------------------------------------------------------------------------------
 
 
-KataGoCommandLine::KataGoCommandLine(const string& message)
-  :TCLAP::CmdLine(message, ' ', Version::getKataGoVersionFullInfo(),true),
+KataHexCommandLine::KataHexCommandLine(const string& message)
+  :TCLAP::CmdLine(message, ' ', Version::getKataHexVersionFullInfo(),true),
   modelFileArg(NULL),
   configFileArg(NULL),
   overrideConfigArg(NULL),
@@ -175,7 +175,7 @@ KataGoCommandLine::KataGoCommandLine(const string& message)
   setOutput(helpOutput);
 }
 
-KataGoCommandLine::~KataGoCommandLine() {
+KataHexCommandLine::~KataHexCommandLine() {
   delete modelFileArg;
   delete configFileArg;
   delete overrideConfigArg;
@@ -183,21 +183,21 @@ KataGoCommandLine::~KataGoCommandLine() {
 }
 
 
-string KataGoCommandLine::defaultGtpConfigFileName() {
+string KataHexCommandLine::defaultGtpConfigFileName() {
   return "default_gtp.cfg";
 }
 
-void KataGoCommandLine::parseArgs(const vector<string>& args) {
+void KataHexCommandLine::parseArgs(const vector<string>& args) {
   vector<string> mutableCopy = args;
   // Call the underlying tclap parse(vector<string>&);
   return parse(mutableCopy);
 }
 
-void KataGoCommandLine::setShortUsageArgLimit() {
+void KataHexCommandLine::setShortUsageArgLimit() {
   helpOutput->setShortUsageArgLimit((int)_argList.size() - numBuiltInArgs);
 }
 
-void KataGoCommandLine::addModelFileArg() {
+void KataHexCommandLine::addModelFileArg() {
   assert(modelFileArg == NULL);
   string helpDesc = "Neural net model file. Defaults to: " + getDefaultModelPathForHelp();
   bool required = false;
@@ -210,7 +210,7 @@ void KataGoCommandLine::addModelFileArg() {
 }
 
 //Empty string indicates no default
-void KataGoCommandLine::addConfigFileArg(const string& defaultCfgFileName, const string& exampleConfigFile) {
+void KataHexCommandLine::addConfigFileArg(const string& defaultCfgFileName, const string& exampleConfigFile) {
   bool required = true;
   if(!defaultCfgFileName.empty()) {
     required = false;
@@ -218,7 +218,7 @@ void KataGoCommandLine::addConfigFileArg(const string& defaultCfgFileName, const
   addConfigFileArg(defaultCfgFileName, exampleConfigFile, required);
 }
 
-void KataGoCommandLine::addConfigFileArg(const string& defaultCfgFileName, const string& exampleConfigFile, bool required) {
+void KataHexCommandLine::addConfigFileArg(const string& defaultCfgFileName, const string& exampleConfigFile, bool required) {
   assert(configFileArg == NULL);
   defaultConfigFileName = defaultCfgFileName;
 
@@ -236,7 +236,7 @@ void KataGoCommandLine::addConfigFileArg(const string& defaultCfgFileName, const
   this->add(*configFileArg);
 }
 
-void KataGoCommandLine::addOverrideConfigArg() {
+void KataHexCommandLine::addOverrideConfigArg() {
   assert(overrideConfigArg == NULL);
   overrideConfigArg = new TCLAP::MultiArg<string>(
     "","override-config","Override config parameters. Format: \"key=value, key=value,...\"",false,"KEYVALUEPAIRS"
@@ -245,7 +245,7 @@ void KataGoCommandLine::addOverrideConfigArg() {
 }
 
 
-string KataGoCommandLine::getModelFile() const {
+string KataHexCommandLine::getModelFile() const {
   assert(modelFileArg != NULL);
   string modelFile = modelFileArg->getValue();
   if(modelFile.empty()) {
@@ -263,16 +263,16 @@ string KataGoCommandLine::getModelFile() const {
     }
     if(pathForErrMsg == "")
       pathForErrMsg = getDefaultModelPathForHelp();
-    throw StringError("-model MODELFILENAME.bin.gz was not specified to tell KataGo where to find the neural net model, and default was not found at " + pathForErrMsg);
+    throw StringError("-model MODELFILENAME.bin.gz was not specified to tell KataHex where to find the neural net model, and default was not found at " + pathForErrMsg);
   }
   return modelFile;
 }
 
-bool KataGoCommandLine::modelFileIsDefault() const {
+bool KataHexCommandLine::modelFileIsDefault() const {
   return modelFileArg->getValue().empty();
 }
 
-string KataGoCommandLine::getConfigFile() const {
+string KataHexCommandLine::getConfigFile() const {
   assert(configFileArg != NULL);
   string configFile = configFileArg->getValue();
   if(configFile.empty() && !defaultConfigFileName.empty()) {
@@ -290,12 +290,12 @@ string KataGoCommandLine::getConfigFile() const {
     }
     if(pathForErrMsg == "")
       pathForErrMsg = getDefaultConfigPathForHelp(defaultConfigFileName);
-    throw StringError("-config CONFIG_FILE_NAME.cfg was not specified to tell KataGo where to find the config, and default was not found at " + pathForErrMsg);
+    throw StringError("-config CONFIG_FILE_NAME.cfg was not specified to tell KataHex where to find the config, and default was not found at " + pathForErrMsg);
   }
   return configFile;
 }
 
-void KataGoCommandLine::maybeApplyOverrideConfigArg(ConfigParser& cfg) const {
+void KataHexCommandLine::maybeApplyOverrideConfigArg(ConfigParser& cfg) const {
   if(overrideConfigArg != NULL) {
     vector<string> overrideConfigs = overrideConfigArg->getValue();
     for(const string& overrideConfig : overrideConfigs) {
@@ -309,7 +309,7 @@ void KataGoCommandLine::maybeApplyOverrideConfigArg(ConfigParser& cfg) const {
   }
 }
 
-void KataGoCommandLine::logOverrides(Logger& logger) const {
+void KataHexCommandLine::logOverrides(Logger& logger) const {
   if(overrideConfigArg != NULL) {
     vector<string> overrideConfigs = overrideConfigArg->getValue();
     for(const string& overrideConfig : overrideConfigs) {
@@ -324,13 +324,13 @@ void KataGoCommandLine::logOverrides(Logger& logger) const {
 }
 
 //cfg must be uninitialized, this will initialize it based on user-provided arguments
-void KataGoCommandLine::getConfig(ConfigParser& cfg) const {
+void KataHexCommandLine::getConfig(ConfigParser& cfg) const {
   string configFile = getConfigFile();
   cfg.initialize(configFile);
   maybeApplyOverrideConfigArg(cfg);
 }
 
-void KataGoCommandLine::getConfigAllowEmpty(ConfigParser& cfg) const {
+void KataHexCommandLine::getConfigAllowEmpty(ConfigParser& cfg) const {
   if(configFileArg->getValue().empty() && defaultConfigFileName.empty()) {
     cfg.initialize(std::map<string,string>());
     maybeApplyOverrideConfigArg(cfg);

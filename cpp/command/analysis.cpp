@@ -65,7 +65,7 @@ int MainCmds::analysis(const vector<string>& args) {
   int numAnalysisThreadsCmdline;
   bool quitWithoutWaiting;
 
-  KataGoCommandLine cmd("Run KataGo parallel JSON-based analysis engine.");
+  KataHexCommandLine cmd("Run KataHex parallel JSON-based analysis engine.");
   try {
     cmd.addConfigFileArg("","analysis_example.cfg");
     cmd.addModelFileArg();
@@ -121,9 +121,9 @@ int MainCmds::analysis(const vector<string>& args) {
     logger.setLogTime(false);
 
   logger.write("Analysis Engine starting...");
-  logger.write(Version::getKataGoVersionForHelp());
+  logger.write(Version::getKataHexVersionForHelp());
   if(!logToStderr) {
-    cerr << Version::getKataGoVersionForHelp() << endl;
+    cerr << Version::getKataHexVersionForHelp() << endl;
   }
 
   const bool logAllRequests = cfg.contains("logAllRequests") ? cfg.getBool("logAllRequests") : false;
@@ -405,7 +405,7 @@ int MainCmds::analysis(const vector<string>& args) {
       if(input.find("action") != input.end() && input["action"].is_string()) {
         string action = input["action"].get<string>();
         if(action == "query_version") {
-          input["version"] = Version::getKataGoVersion();
+          input["version"] = Version::getKataHexVersion();
           input["git_hash"] = Version::getGitRevision();
           pushToWrite(new string(input.dump()));
         }

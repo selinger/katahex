@@ -9,7 +9,7 @@
 class KataHelpOutput;
 class Logger;
 
-class KataGoCommandLine : public TCLAP::CmdLine
+class KataHexCommandLine : public TCLAP::CmdLine
 {
   TCLAP::ValueArg<std::string>* modelFileArg;
   TCLAP::ValueArg<std::string>* configFileArg;
@@ -19,8 +19,8 @@ class KataGoCommandLine : public TCLAP::CmdLine
   KataHelpOutput* helpOutput;
 
   public:
-  KataGoCommandLine(const std::string& message);
-  ~KataGoCommandLine();
+  KataHexCommandLine(const std::string& message);
+  ~KataHexCommandLine();
 
   static std::string defaultGtpConfigFileName();
 

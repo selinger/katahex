@@ -171,7 +171,7 @@ void BookHash::getHashAndSymmetry(const BoardHistory& hist, int repBound, BookHa
 double BookValues::getAdjustedScoreError(const Rules& rules) const {
   if(rules.gameResultWillBeInteger()) {
     double scoreVariance = scoreStdev * scoreStdev;
-    // KataGo's formalization of the score variance in draw-allowed games will be systematically too high by 0.25
+    // KataHex's formalization of the score variance in draw-allowed games will be systematically too high by 0.25
     // due to blurring of the score on the half-integer gridpoints.
     // Assumes drawEquivalentWinsForWhite = 0.5.
     double adjustedScoreVariance = scoreVariance - 0.25;

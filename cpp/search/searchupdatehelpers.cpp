@@ -424,7 +424,7 @@ double Search::pruneNoiseWeight(vector<MoreNodeStats>& statsBuf, int numChildren
   if(numChildren <= 1 || totalChildWeight <= 0.00001)
     return totalChildWeight;
 
-  // Children are normally sorted in policy order in KataGo.
+  // Children are normally sorted in policy order in KataHex.
   // But this is not guaranteed, because at the root, we might recompute the nnoutput, or when finding the best new child, we have hacks like antiMirror policy
   // and other adjustments. For simplicity, we just consider children in sorted order anyways for this pruning, since it will be close.
 

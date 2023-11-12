@@ -10,7 +10,7 @@ namespace HomeData {
   //A version that doesn't access the file system, intended for help messages, and should never fail.
   std::string getDefaultFilesDirForHelpMessage();
 
-  //Returns a directory suitable for writing data that KataGo generates automatically, such as auto-tuning data.
+  //Returns a directory suitable for writing data that KataHex generates automatically, such as auto-tuning data.
   //May throw StringError if filesystem access fails.
   //If makeDir is true, will attempt to create the directory if it doesn't exist.
   //If homeDataDirOverride is nonempty, then just uses homeDataDirOverride.

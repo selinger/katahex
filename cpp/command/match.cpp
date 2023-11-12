@@ -35,7 +35,7 @@ int MainCmds::match(const vector<string>& args) {
   string logFile;
   string sgfOutputDir;
   try {
-    KataGoCommandLine cmd("Play different nets against each other with different search settings in a match or tournament.");
+    KataHexCommandLine cmd("Play different nets against each other with different search settings in a match or tournament.");
     cmd.addConfigFileArg("","match_example.cfg");
 
     TCLAP::ValueArg<string> logFileArg("","log-file","Log file to output to",false,string(),"FILE");

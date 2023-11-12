@@ -222,7 +222,7 @@ let hoverTableEltsByMove = {};
 
 {
   let title = document.createElement("h1");
-  title.appendChild(document.createTextNode("KataGo Opening Book " + bSizeX + " x " + bSizeY + ""));
+  title.appendChild(document.createTextNode("KataHex Opening Book " + bSizeX + " x " + bSizeY + ""));
   title.id = "title";
   body.appendChild(title);
 }

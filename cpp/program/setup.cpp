@@ -341,7 +341,7 @@ SearchParams Setup::loadSingleParams(
 ) {
   vector<SearchParams> paramss = loadParams(cfg, setupFor);
   if(paramss.size() != 1)
-    throw StringError("Config contains parameters for multiple bot configurations, but this KataGo command only supports a single configuration");
+    throw StringError("Config contains parameters for multiple bot configurations, but this KataHex command only supports a single configuration");
   return paramss[0];
 }
 

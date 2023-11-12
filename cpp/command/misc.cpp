@@ -369,7 +369,7 @@ int MainCmds::demoplay(const vector<string>& args) {
   string logFile;
   string modelFile;
   try {
-    KataGoCommandLine cmd("Self-play demo dumping status to stdout");
+    KataHexCommandLine cmd("Self-play demo dumping status to stdout");
     cmd.addConfigFileArg("","");
     cmd.addModelFileArg();
     cmd.addOverrideConfigArg();
@@ -587,7 +587,7 @@ int MainCmds::samplesgfs(const vector<string>& args) {
   double maxKomi;
 
   try {
-    KataGoCommandLine cmd("Search for suprising good moves in sgfs");
+    KataHexCommandLine cmd("Search for suprising good moves in sgfs");
 
     TCLAP::MultiArg<string> sgfDirArg("","sgfdir","Directory of sgf files",true,"DIR");
     TCLAP::ValueArg<string> outDirArg("","outdir","Directory to write results",true,string(),"DIR");
@@ -889,7 +889,7 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
   double maxPolicy;
 
   try {
-    KataGoCommandLine cmd("Search for suprising good moves in sgfs");
+    KataHexCommandLine cmd("Search for suprising good moves in sgfs");
     cmd.addConfigFileArg("","");
     cmd.addModelFileArg();
     cmd.addOverrideConfigArg();
@@ -1755,7 +1755,7 @@ int MainCmds::trystartposes(const vector<string>& args) {
   vector<string> startPosesFiles;
   double minWeight;
   try {
-    KataGoCommandLine cmd("Try running searches starting from startposes");
+    KataHexCommandLine cmd("Try running searches starting from startposes");
     cmd.addConfigFileArg("","");
     cmd.addModelFileArg();
     cmd.addOverrideConfigArg();
@@ -1910,7 +1910,7 @@ int MainCmds::viewstartposes(const vector<string>& args) {
   vector<string> startPosesFiles;
   double minWeight;
   try {
-    KataGoCommandLine cmd("View startposes");
+    KataHexCommandLine cmd("View startposes");
     cmd.addConfigFileArg("","",false);
     cmd.addModelFileArg();
     cmd.addOverrideConfigArg();
@@ -2057,7 +2057,7 @@ int MainCmds::sampleinitializations(const vector<string>& args) {
   int numToGen;
   bool evaluate;
   try {
-    KataGoCommandLine cmd("View startposes");
+    KataHexCommandLine cmd("View startposes");
     cmd.addConfigFileArg("","");
     cmd.addModelFileArg();
     cmd.addOverrideConfigArg();

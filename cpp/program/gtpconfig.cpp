@@ -7,7 +7,7 @@ static const string gtpBase = R"%%(
 # Logs and files--------------------------------------------------------------------------
 
 # Where to output log?
-logDir = gtp_logs    # Each run of KataGo will log to a separate file in this dir
+logDir = gtp_logs    # Each run of KataHex will log to a separate file in this dir
 # logFile = gtp.log  # Use this instead of logDir to just specify a single file directly
 
 # Logging options
@@ -15,7 +15,7 @@ logAllGTPCommunication = true
 logSearchInfo = true
 logToStderr = false
 
-# Optionally override where KataGo will attempt to save things like openCLTuner files and other cached data.
+# Optionally override where KataHex will attempt to save things like openCLTuner files and other cached data.
 # homeDataDir = DIRECTORY
 
 # Analysis------------------------------------------------------------------------------------
@@ -28,14 +28,14 @@ logToStderr = false
 # Default is SIDETOMOVE, which is what tools that use LZ probably also expect
 # reportAnalysisWinratesAs = SIDETOMOVE
 
-# Larger values will make KataGo explore the top move(s) less deeply and accurately,
+# Larger values will make KataHex explore the top move(s) less deeply and accurately,
 # but explore and give evaluations to a greater variety of moves, for analysis (does NOT affect play).
 # Defaults to 0.04.
 # An extreme value like 1 will distribute many playouts across every move on the board, even very bad moves.
 # analysisWideRootNoise = 0.04
 
 # Default rules------------------------------------------------------------------------------------
-# See https://lightvector.github.io/KataGo/rules.html for a description of the rules.
+# See https://lightvector.github.io/KataHex/rules.html for a description of the rules.
 # These rules are defaults and can be changed mid-run by several custom GTP commands.
 # See https://github.com/lightvector/KataGo/blob/master/docs/GTP_Extensions.md for those commands.
 
@@ -60,7 +60,7 @@ $$FRIENDLY_PASS_OK
 allowResignation = true
 resignThreshold = -0.90
 resignConsecTurns = 3
-# Uncomment to make katago not resign close games, behind by fewer than this many points
+# Uncomment to make katahex not resign close games, behind by fewer than this many points
 # resignMinScoreDifference = 10
 
 # Handicap -------------
@@ -73,21 +73,21 @@ resignConsecTurns = 3
 # Defaults to true! Uncomment and set to false to disable this behavior.
 # assumeMultipleStartingBlackMovesAreHandicap = true
 
-# Makes katago dynamically adjust in handicap or altered-komi games to assume it is stronger or weaker than the opponent
+# Makes katahex dynamically adjust in handicap or altered-komi games to assume it is stronger or weaker than the opponent
 # based on those game settings making sense, greatly improving handicap strength but biasing winrates and scores.
 # Does NOT affect analysis (lz-analyze, kata-analyze, used by programs like Lizzie) so analysis remains unbiased.
-# Uncomment and set this to 0 to disable this and make KataGo play the same always.
+# Uncomment and set this to 0 to disable this and make KataHex play the same always.
 # dynamicPlayoutDoublingAdvantageCapPerOppLead = 0.045
 
-# Instead of a dynamic level, you can uncomment this and set this to a value from -3.0 to 3.0 to set KataGo's aggression to a FIXED level.
+# Instead of a dynamic level, you can uncomment this and set this to a value from -3.0 to 3.0 to set KataHex's aggression to a FIXED level.
 # DOES affect analysis (lz-analyze, kata-analyze, used by programs like Lizzie).
-# Negative makes KataGo behave as if it is much weaker than the opponent, preferring to play defensively.
-# Positive makes KataGo behave as if it is much stronger than the opponent, prefering to play aggressively or even overplay slightly.
+# Negative makes KataHex behave as if it is much weaker than the opponent, preferring to play defensively.
+# Positive makes KataHex behave as if it is much stronger than the opponent, prefering to play aggressively or even overplay slightly.
 # If this and "dynamicPlayoutDoublingAdvantageCapPerOppLead" are BOTH set then dynamic will be used for all games and this fixed
 # value will be used for analysis tools.
 # playoutDoublingAdvantage = 0.0
 
-# Uncommenting one of these will enforce that the FIXED playoutDoublingAdvantage will only apply when KataGo plays the specified color
+# Uncommenting one of these will enforce that the FIXED playoutDoublingAdvantage will only apply when KataHex plays the specified color
 # and will be negated when playing the opposite color.
 # playoutDoublingAdvantagePla = BLACK
 # playoutDoublingAdvantagePla = WHITE
@@ -99,12 +99,12 @@ resignConsecTurns = 3
 # rootSymmetryPruning = true
 
 
-# Have KataGo mildly prefer to avoid playing the same joseki in every corner of the board.
+# Have KataHex mildly prefer to avoid playing the same joseki in every corner of the board.
 # Uncomment to set to a specific value. Otherwise, defaults to 0 in even games, and to 0.005 in handicap games.
 # See also the Avoid SGF mechanism at the bottom of this config.
 # avoidRepeatedPatternUtility = 0.0
 
-# Experimental logic to make KataGo fight a bit against mirror Go even with unfavorable komi.
+# Experimental logic to make KataHex fight a bit against mirror Go even with unfavorable komi.
 # Disabled by default, uncomment and set to true to enable it.
 # antiMirror = false
 
@@ -146,7 +146,7 @@ searchFactorWhenWinningThreshold = 0.95
 # nnMaxBatchSize = <integer>
 
 # Cache up to (2 ** this) many neural net evaluations in case of transpositions in the tree.
-# Uncomment and edit to change if you want to adjust a major component of KataGo's RAM usage.
+# Uncomment and edit to change if you want to adjust a major component of KataHex's RAM usage.
 nnCacheSizePowerOfTwo = $$NN_CACHE_SIZE_POWER_OF_TWO
 
 # Size of mutex pool for nnCache is (2 ** this).
@@ -163,7 +163,7 @@ $$MULTIPLE_GPUS
 
 
 # Avoid SGF Patterns ------------------------------------------------------------------------------
-# The parameters in this section provide a powerful way to customize KataGo to avoid moves that follow specific patterns
+# The parameters in this section provide a powerful way to customize KataHex to avoid moves that follow specific patterns
 # based on a set of provided SGF files loaded upon startup. Uncomment them to use this feature.
 # Additionally, if the SGF file contains the string %SKIP% in a comment on a move, that move will be ignored for this purpose.
 
@@ -171,7 +171,7 @@ $$MULTIPLE_GPUS
 # avoidSgfPatternDirs = path/to/directory/with/sgfs/
 
 # Penalize this much utility per matching move.
-# Set this negative if you instead want to make KataGo favor the SGF patterns instead of penalizing it!
+# Set this negative if you instead want to make KataHex favor the SGF patterns instead of penalizing it!
 # This number does not need to be large, even 0.001 will make a difference. Too-large values may lead to bad play.
 # avoidSgfPatternUtility = 0.001
 

@@ -421,7 +421,7 @@ int MainCmds::matchauto(const vector<string>& args) {
   string sgfOutputDir;
   string resultsDir;
   try {
-    KataGoCommandLine cmd("Play different nets against each other with different search settings in a match or tournament, experimental.");
+    KataHexCommandLine cmd("Play different nets against each other with different search settings in a match or tournament, experimental.");
     cmd.addConfigFileArg("","");
 
     TCLAP::ValueArg<string> logFileArg("","log-file","Log file to output to",false,string(),"FILE");

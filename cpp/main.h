@@ -29,9 +29,9 @@ namespace MainCmds {
 }
 
 namespace Version {
-  std::string getKataGoVersion();
-  std::string getKataGoVersionForHelp();
-  std::string getKataGoVersionFullInfo();
+  std::string getKataHexVersion();
+  std::string getKataHexVersionForHelp();
+  std::string getKataHexVersionFullInfo();
   std::string getGitRevision();
   std::string getGitRevisionWithBackend();
 }

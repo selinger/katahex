@@ -239,7 +239,7 @@ template struct NumpyBuffer<int64_t>;
 #ifdef NO_LIBZIP
 
 static void throwZipError() {
-  throw StringError("KataGo was built without libzip library, unable to create zip file or write training data");
+  throw StringError("KataHex was built without libzip library, unable to create zip file or write training data");
 }
 
 ZipFile::ZipFile(const string& fName)

@@ -2621,7 +2621,7 @@ void OpenCLTuner::autoTuneEverything(
 
   string gpuName = allDeviceInfos[gpuIdxForTuning].name;
 
-  //Just hardcodedly tune all the models that KataGo's main run uses.
+  //Just hardcodedly tune all the models that KataHex's main run uses.
   static_assert(NNModelVersion::latestModelVersionImplemented == 10, "");
   vector<ModelInfoForTuning> modelInfos;
   {

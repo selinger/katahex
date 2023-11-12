@@ -42,7 +42,7 @@ int MainCmds::selfplay(const vector<string>& args) {
   string outputDir;
   int64_t maxGamesTotal = ((int64_t)1) << 62;
   try {
-    KataGoCommandLine cmd("Generate training data via self play.");
+    KataHexCommandLine cmd("Generate training data via self play.");
     cmd.addConfigFileArg("","");
 
     TCLAP::ValueArg<string> modelsDirArg("","models-dir","Dir to poll and load models from",true,string(),"DIR");

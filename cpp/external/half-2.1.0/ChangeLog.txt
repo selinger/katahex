@@ -1,4 +1,4 @@
-NOTE: This version locally modified for KataGo to fix some g++ compiler warnings
+NOTE: This version locally modified for KataHex to fix some g++ compiler warnings
 about default switch cases.
 
 Release Notes

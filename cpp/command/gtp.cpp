@@ -32,7 +32,7 @@ static const vector<string> knownCommands = {
   "clear_board",
   "set_position",
   "komi",
-  //GTP extension - get KataGo's current komi setting
+  //GTP extension - get KataHex's current komi setting
   "get_komi",
   "play",
   "undo",
@@ -60,7 +60,7 @@ static const vector<string> knownCommands = {
   "time_settings",
   "kgs-time_settings",
   "time_left",
-  //KataGo extensions for time settings
+  //KataHex extensions for time settings
   "kata-list_time_settings",
   "kata-time_settings",
 
@@ -626,7 +626,7 @@ struct GTPEngine {
           double utility = data.utility;
           //We still hack the LCB for consistency with LZ-analyze
           double lcb = PlayUtils::getHackedLCBForWinrate(search,data,pla);
-          ///But now we also offer the proper LCB that KataGo actually uses.
+          ///But now we also offer the proper LCB that KataHex actually uses.
           double utilityLcb = data.lcb;
           double scoreMean = data.scoreMean;
           double lead = data.lead;
@@ -1166,14 +1166,14 @@ int MainCmds::gtp(const vector<string>& args) {
   ConfigParser cfg;
   string nnModelFile;
   string overrideVersion;
-  KataGoCommandLine cmd("Run KataGo main GTP engine for playing games or casual analysis.");
+  KataHexCommandLine cmd("Run KataHex main GTP engine for playing games or casual analysis.");
   try {
-    cmd.addConfigFileArg(KataGoCommandLine::defaultGtpConfigFileName(),"gtp_example.cfg");
+    cmd.addConfigFileArg(KataHexCommandLine::defaultGtpConfigFileName(),"gtp_example.cfg");
     cmd.addModelFileArg();
     cmd.setShortUsageArgLimit();
     cmd.addOverrideConfigArg();
 
-    TCLAP::ValueArg<string> overrideVersionArg("","override-version","Force KataGo to say a certain value in response to gtp version command",false,string(),"VERSION");
+    TCLAP::ValueArg<string> overrideVersionArg("","override-version","Force KataHex to say a certain value in response to gtp version command",false,string(),"VERSION");
     cmd.add(overrideVersionArg);
     cmd.parseArgs(args);
     nnModelFile = cmd.getModelFile();
@@ -1215,10 +1215,10 @@ int MainCmds::gtp(const vector<string>& args) {
   }
 
   logger.write("GTP Engine starting...");
-  logger.write(Version::getKataGoVersionForHelp());
+  logger.write(Version::getKataHexVersionForHelp());
   //Also check loggingToStderr so that we don't duplicate the message from the log file
   if(startupPrintMessageToStderr && !loggingToStderr) {
-    cerr << Version::getKataGoVersionForHelp() << endl;
+    cerr << Version::getKataHexVersionForHelp() << endl;
   }
 
   //Defaults to 7.5 komi, gtp will generally override this
@@ -1413,14 +1413,14 @@ int MainCmds::gtp(const vector<string>& args) {
     }
 
     else if(command == "name") {
-      response = "KataGo";
+      response = "KataHex";
     }
 
     else if(command == "version") {
       if(overrideVersion.size() > 0)
         response = overrideVersion;
       else
-        response = Version::getKataGoVersion();
+        response = Version::getKataHexVersion();
     }
 
     else if(command == "known_command") {

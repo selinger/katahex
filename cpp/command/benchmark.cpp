@@ -67,8 +67,8 @@ int MainCmds::benchmark(const vector<string>& args) {
   bool autoTuneThreads;
   double secondsPerGameMove;
   try {
-    KataGoCommandLine cmd("Benchmark with gtp config to test speed with different numbers of threads.");
-    cmd.addConfigFileArg(KataGoCommandLine::defaultGtpConfigFileName(),"gtp_example.cfg");
+    KataHexCommandLine cmd("Benchmark with gtp config to test speed with different numbers of threads.");
+    cmd.addConfigFileArg(KataHexCommandLine::defaultGtpConfigFileName(),"gtp_example.cfg");
     cmd.addModelFileArg();
     TCLAP::ValueArg<long> visitsArg("v","visits","How many visits to use per search (default " + Global::int64ToString(defaultMaxVisits) + ")",false,(long)defaultMaxVisits,"VISITS");
     TCLAP::ValueArg<string> threadsArg("t","threads","Test these many threads, comma-separated, e.g. '4,8,12,16' ",false,"","THREADS");
@@ -227,12 +227,12 @@ int MainCmds::benchmark(const vector<string>& args) {
     cout << "If you have a strong GPU capable of FP16 tensor cores (e.g. RTX2080) setting this to true may give a large performance boost." << endl;
 #endif
 #ifdef USE_OPENCL_BACKEND
-  cout << "You are currently using the OpenCL version of KataGo." << endl;
+  cout << "You are currently using the OpenCL version of KataHex." << endl;
   cout << "If you have a strong GPU capable of FP16 tensor cores (e.g. RTX2080), "
-       << "using the Cuda version of KataGo instead may give a mild performance boost." << endl;
+       << "using the Cuda version of KataHex instead may give a mild performance boost." << endl;
 #endif
 #ifdef USE_EIGEN_BACKEND
-  cout << "You are currently using the Eigen (CPU) version of KataGo. Due to having no GPU, it may be slow." << endl;
+  cout << "You are currently using the Eigen (CPU) version of KataHex. Due to having no GPU, it may be slow." << endl;
 #endif
   cout << endl;
   cout << "Your GTP config is currently set to use numSearchThreads = " << params.numThreads << endl;
@@ -519,7 +519,7 @@ int MainCmds::genconfig(const vector<string>& args, const string& firstCommand) 
   string modelFile;
   bool modelFileIsDefault;
   try {
-    KataGoCommandLine cmd("Automatically generate and tune a new GTP config.");
+    KataHexCommandLine cmd("Automatically generate and tune a new GTP config.");
     cmd.addModelFileArg();
 
     TCLAP::ValueArg<string> outputFileArg("","output","Path to write new config (default gtp.cfg)",false,string("gtp.cfg"),"FILE");
@@ -600,7 +600,7 @@ int MainCmds::genconfig(const vector<string>& args, const string& firstCommand) 
   {
     cout << endl;
     string prompt =
-      "What rules should KataGo use by default for play and analysis?\n"
+      "What rules should KataHex use by default for play and analysis?\n"
       "(chinese, japanese, korean, tromp-taylor, aga, chinese-ogs, new-zealand, bga, stone-scoring, aga-button):\n";
     promptAndParseInput(prompt, [&](const string& line) { configRules = Rules::parseRules(line); });
   }
@@ -613,8 +613,8 @@ int MainCmds::genconfig(const vector<string>& args, const string& firstCommand) 
   {
     cout << endl;
     string prompt =
-      "When playing games, KataGo will always obey the time controls given by the GUI/tournament/match/online server.\n"
-      "But you can specify an additional limit to make KataGo move much faster. This does NOT affect analysis/review,\n"
+      "When playing games, KataHex will always obey the time controls given by the GUI/tournament/match/online server.\n"
+      "But you can specify an additional limit to make KataHex move much faster. This does NOT affect analysis/review,\n"
       "only affects playing games. Add a limit? (y/n) (default n):\n";
     promptAndParseInput(prompt, [&](const string& line) {
         if(line == "") useSearchLimit = false;
@@ -625,8 +625,8 @@ int MainCmds::genconfig(const vector<string>& args, const string& firstCommand) 
   if(!useSearchLimit) {
     cout << endl;
     string prompt =
-      "NOTE: No limits configured for KataGo. KataGo will obey time controls provided by the GUI or server or match script\n"
-      "but if they don't specify any, when playing games KataGo may think forever without moving. (press enter to continue)\n";
+      "NOTE: No limits configured for KataHex. KataHex will obey time controls provided by the GUI or server or match script\n"
+      "but if they don't specify any, when playing games KataHex may think forever without moving. (press enter to continue)\n";
     promptAndParseInput(prompt, [&](const string& line) {
         (void)line;
       });
@@ -693,7 +693,7 @@ int MainCmds::genconfig(const vector<string>& args, const string& firstCommand) 
   {
     cout << endl;
     string prompt =
-      "When playing games, KataGo can optionally ponder during the opponent's turn. This gives faster/stronger play\n"
+      "When playing games, KataHex can optionally ponder during the opponent's turn. This gives faster/stronger play\n"
       "in real games but should NOT be enabled if you are running tests with fixed limits (pondering may exceed those\n"
       "limits), or to avoid stealing the opponent's compute time when testing two bots on the same machine.\n"
       "Enable pondering? (y/n, default n):";
@@ -706,7 +706,7 @@ int MainCmds::genconfig(const vector<string>& args, const string& firstCommand) 
   if(usePonder) {
     cout << endl;
     string prompt =
-      "Specify max num seconds KataGo should ponder during the opponent's turn. Leave blank for no limit:\n";
+      "Specify max num seconds KataHex should ponder during the opponent's turn. Leave blank for no limit:\n";
     promptAndParseInput(prompt, [&](const string& line) {
         if(line == "") configMaxPonderTime = 1.0e20;
         else {
@@ -747,7 +747,7 @@ int MainCmds::genconfig(const vector<string>& args, const string& firstCommand) 
   {
     cout << endl;
     string prompt =
-      "By default, KataGo will cache up to about 3GB of positions in memory (RAM), in addition to\n"
+      "By default, KataHex will cache up to about 3GB of positions in memory (RAM), in addition to\n"
       "whatever the current search is using. Specify a different max in GB or leave blank for default:\n";
     promptAndParseInput(prompt, [&](const string& line) {
         string s = Global::toLower(line);
@@ -936,7 +936,7 @@ int MainCmds::genconfig(const vector<string>& args, const string& firstCommand) 
   out << configFileContents;
   out.close();
 
-  cout << "You should be now able to run KataGo with this config via something like:" << endl;
+  cout << "You should be now able to run KataHex with this config via something like:" << endl;
   if(modelFileIsDefault)
     cout << firstCommand << " gtp -config '" << outputFile << "'" << endl;
   else

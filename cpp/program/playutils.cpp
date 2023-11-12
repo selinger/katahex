@@ -226,7 +226,7 @@ void PlayUtils::initializeGameUsingPolicy(
 
 double PlayUtils::getHackedLCBForWinrate(const Search* search, const AnalysisData& data, Player pla) {
   double winrate = 0.5 * (1.0 + data.winLossValue);
-  //Super hacky - in KataGo, lcb is on utility (i.e. also weighting score), not winrate, but if you're using
+  //Super hacky - in KataHex, lcb is on utility (i.e. also weighting score), not winrate, but if you're using
   //lz-analyze you probably don't know about utility and expect LCB to be about winrate. So we apply the LCB
   //radius to the winrate in order to get something reasonable to display, and also scale it proportionally
   //by how much winrate is supposed to matter relative to score.

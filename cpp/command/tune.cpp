@@ -15,7 +15,7 @@ using namespace std;
 
 int MainCmds::tuner(const vector<string>& args) {
 #ifndef USE_OPENCL_BACKEND
-  cout << "Currently this command only does anything for the OpenCL version of KataGo" << endl;
+  cout << "Currently this command only does anything for the OpenCL version of KataHex" << endl;
   (void)args;
   return 0;
 #else
@@ -41,8 +41,8 @@ int MainCmds::tuner(const vector<string>& args) {
   bool verboseErrors;
   bool verboseTuner;
   try {
-    KataGoCommandLine cmd("Perform GPU tuning for OpenCL.");
-    cmd.addConfigFileArg(KataGoCommandLine::defaultGtpConfigFileName(),"gtp_example.cfg");
+    KataHexCommandLine cmd("Perform GPU tuning for OpenCL.");
+    cmd.addConfigFileArg(KataHexCommandLine::defaultGtpConfigFileName(),"gtp_example.cfg");
     cmd.addModelFileArg();
 
     TCLAP::ValueArg<string> outputFileArg("","output","Filename to output tuning configration to",false,string(),"FILE");

@@ -47,7 +47,7 @@ static void readFloats(istream& in, size_t numFloats, bool binaryFloats, const s
       throw StringError(name + ": could not read float weights. Invalid model - perhaps you are trying to load a .bin.gz model as a .txt.gz model?");
   }
   else {
-    //KataGo hacky model format - "@BIN@" followed by the expected number of 32 bit floats, in little-endian binary
+    //KataHex hacky model format - "@BIN@" followed by the expected number of 32 bit floats, in little-endian binary
     assert(sizeof(float) == 4);
     {
       string s;
@@ -964,9 +964,9 @@ ModelDesc::ModelDesc(istream& in, bool binaryFloats) {
   if(version < 0)
     throw StringError("This neural net has an invalid version, you probably specified the wrong file. Supposed model version: " + Global::intToString(version));
   if(version < 3)
-    throw StringError("This neural net is from an extremely old version of KataGo and is no longer supported by the engine. Model version: " + Global::intToString(version));
+    throw StringError("This neural net is from an extremely old version of KataHex and is no longer supported by the engine. Model version: " + Global::intToString(version));
   if(version > NNModelVersion::latestModelVersionImplemented)
-    throw StringError("This neural net requires a newer KataGo version. Obtain a newer KataGo at https://github.com/lightvector/KataGo. Model version: " + Global::intToString(version));
+    throw StringError("This neural net requires a newer KataHex version. Obtain a newer KataHex at https://github.com/lightvector/KataGo. Model version: " + Global::intToString(version));
 
   in >> numInputChannels;
   if(in.fail())
