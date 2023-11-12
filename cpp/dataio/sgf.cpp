@@ -105,7 +105,7 @@ static Loc parseSgfLoc(const string& s, int xSize, int ySize) {
 static const int COORD_MAX = 128;
 
 static MoveNoBSize parseSgfLocOrPassNoSize(const string& s, Player pla) {
-  if(s == "pass")
+  if(Global::isEqualCaseInsensitive(s,string("pass")))
     return MoveNoBSize(COORD_MAX,COORD_MAX,pla);
   Loc loc = parseSgfLoc(s, COORD_MAX, COORD_MAX);
   int x = Location::getX(loc, COORD_MAX);
@@ -138,7 +138,7 @@ static void parseSgfLocRectangle(const string& s, int xSize, int ySize, int& x1,
 }
 
 static Loc parseSgfLocOrPass(const string& s, int xSize, int ySize) {
-  if(s == "pass")
+  if(Global::isEqualCaseInsensitive(s,string("pass")))
     return Board::PASS_LOC;
   return parseSgfLoc(s,xSize,ySize);
 }
