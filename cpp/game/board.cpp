@@ -198,7 +198,7 @@ bool Board::isOnBoard(Loc loc) const {
 }
 
 //Check if moving here is illegal.
-bool Board::isLegal(Loc loc, Player pla, bool isMultiStoneSuicideLegal) const
+bool Board::isLegal(Loc loc, Player pla) const
 {
   if(pla != P_BLACK && pla != P_WHITE)
     return false;
@@ -210,9 +210,9 @@ bool Board::isLegal(Loc loc, Player pla, bool isMultiStoneSuicideLegal) const
 }
 
 //Check if moving here is illegal, ignoring simple ko
-bool Board::isLegalIgnoringKo(Loc loc, Player pla, bool isMultiStoneSuicideLegal) const
+bool Board::isLegalIgnoringKo(Loc loc, Player pla) const
 {
-  return isLegal(loc, pla, isMultiStoneSuicideLegal);
+  return isLegal(loc, pla);
 }
 
 
@@ -275,9 +275,9 @@ bool Board::setStone(Loc loc, Color color)
 
 
 //Attempts to play the specified move. Returns true if successful, returns false if the move was illegal.
-bool Board::playMove(Loc loc, Player pla, bool isMultiStoneSuicideLegal)
+bool Board::playMove(Loc loc, Player pla)
 {
-  if(isLegal(loc,pla,isMultiStoneSuicideLegal))
+  if(isLegal(loc,pla))
   {
     playMoveAssumeLegal(loc,pla);
     return true;
@@ -346,8 +346,6 @@ void Board::playMoveAssumeLegal(Loc loc, Player pla)
   {
     return;
   }
-
-  Player opp = getOpp(pla);
 
   //Add the new stone as an independent group
   colors[loc] = pla;
@@ -430,7 +428,7 @@ void Board::checkConsistency() const {
       throw StringError(errLabel + "Corrupted adj_offsets array");
 }
 
-bool Board::isEqualForTesting(const Board& other, bool checkNumCaptures, bool checkSimpleKo) const {
+bool Board::isEqualForTesting(const Board& other) const {
   checkConsistency();
   other.checkConsistency();
   if(x_size != other.x_size)

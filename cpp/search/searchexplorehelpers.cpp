@@ -411,7 +411,7 @@ void Search::selectBestChildToDescend(
     }
   }
   if(bestNewMoveLoc != Board::NULL_LOC) {
-    if (!thread.board.isLegal(bestNewMoveLoc, node.nextPla, false))std::cout << "illegal select move";
+    if (!thread.board.isLegal(bestNewMoveLoc, node.nextPla))std::cout << "illegal select move";
     double selectionValue = getNewExploreSelectionValue(
       node,bestNewNNPolicyProb,totalChildWeight,fpuValue,
       parentWeightPerVisit,parentUtilityStdevFactor,

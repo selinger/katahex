@@ -232,7 +232,7 @@ void BoardHistory::setWinner(Player pla)
 bool BoardHistory::isLegal(const Board& board, Loc moveLoc, Player movePla) const {
   //Ko-moves in the encore that are recapture blocked are interpreted as pass-for-ko, so they are legal
 
-  if(!board.isLegalIgnoringKo(moveLoc,movePla,false))
+  if(!board.isLegalIgnoringKo(moveLoc,movePla))
     return false;
 
   return true;
@@ -240,15 +240,13 @@ bool BoardHistory::isLegal(const Board& board, Loc moveLoc, Player movePla) cons
 
 
 bool BoardHistory::isLegalTolerant(const Board& board, Loc moveLoc, Player movePla) const {
-  bool multiStoneSuicideLegal = true; //Tolerate suicide regardless of rules
-  if(!board.isLegalIgnoringKo(moveLoc,movePla,multiStoneSuicideLegal))
+  if(!board.isLegalIgnoringKo(moveLoc,movePla))
     return false;
   return true;
 }
 
 bool BoardHistory::makeBoardMoveTolerant(Board& board, Loc moveLoc, Player movePla) {
-  bool multiStoneSuicideLegal = true; //Tolerate suicide regardless of rules
-  if(!board.isLegalIgnoringKo(moveLoc,movePla,multiStoneSuicideLegal))
+  if(!board.isLegalIgnoringKo(moveLoc,movePla))
     return false;
   makeBoardMoveAssumeLegal(board,moveLoc,movePla);
   return true;

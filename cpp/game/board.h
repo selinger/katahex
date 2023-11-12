@@ -149,9 +149,9 @@ struct Board
 
   //Functions------------------------------------
 
-  bool isLegalIgnoringKo(Loc loc, Player pla, bool isMultiStoneSuicideLegal) const;
+  bool isLegalIgnoringKo(Loc loc, Player pla) const;
   //Check if moving here is legal. Equivalent to isLegalIgnoringKo && !isKoBanned
-  bool isLegal(Loc loc, Player pla, bool isMultiStoneSuicideLegal) const;
+  bool isLegal(Loc loc, Player pla) const;
   //Check if this location is on the board
   bool isOnBoard(Loc loc) const;
   bool isEmpty() const;
@@ -166,7 +166,7 @@ struct Board
   bool setStone(Loc loc, Color color);
 
   //Attempts to play the specified move. Returns true if successful, returns false if the move was illegal.
-  bool playMove(Loc loc, Player pla, bool isMultiStoneSuicideLegal);
+  bool playMove(Loc loc, Player pla);
 
   //Plays the specified move, assuming it is legal.
   void playMoveAssumeLegal(Loc loc, Player pla);
@@ -190,7 +190,7 @@ struct Board
   void checkConsistency() const;
   //For the moment, only used in testing since it does extra consistency checks.
   //If we need a version to be used in "prod", we could make an efficient version maybe as operator==.
-  bool isEqualForTesting(const Board& other, bool checkNumCaptures, bool checkSimpleKo) const;
+  bool isEqualForTesting(const Board& other) const;
 
   static Board parseBoard(int xSize, int ySize, const std::string& s);
   static Board parseBoard(int xSize, int ySize, const std::string& s, char lineDelimiter);

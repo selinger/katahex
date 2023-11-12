@@ -898,8 +898,8 @@ Sgf::PositionSample Sgf::PositionSample::getColorFlipped() const {
   return other;
 }
 
-bool Sgf::PositionSample::isEqualForTesting(const Sgf::PositionSample& other, bool checkNumCaptures, bool checkSimpleKo) const {
-  if(!board.isEqualForTesting(other.board,checkNumCaptures,checkSimpleKo))
+bool Sgf::PositionSample::isEqualForTesting(const Sgf::PositionSample& other) const {
+  if(!board.isEqualForTesting(other.board))
     return false;
   if(nextPla != other.nextPla)
     return false;

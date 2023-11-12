@@ -1339,7 +1339,7 @@ FinishedGameData* Play::runGame(
         int x = gameRand.nextUInt(board.x_size);
         int y = gameRand.nextUInt(board.y_size);
         loc = Location::getLoc(x, y, board.x_size);
-      } while (!board.isLegal(loc, pla, false));
+      } while (!board.isLegal(loc, pla));
 
       hist.makeBoardMoveAssumeLegal(board, loc, pla);
       pla = getOpp(pla);

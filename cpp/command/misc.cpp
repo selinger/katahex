@@ -1473,9 +1473,8 @@ int MainCmds::dataminesgfs(const vector<string>& args) {
     //This is hacky and makes everything quadratic, but whatever
     Board board = treeHist.initialBoard;
     for(int i = 0; i<startTurn; i++) {
-      bool multiStoneSuicideLegal = true;
       //Just in case
-      if(!board.isLegal(treeHist.moveHistory[i].loc,treeHist.moveHistory[i].pla,multiStoneSuicideLegal))
+      if(!board.isLegal(treeHist.moveHistory[i].loc,treeHist.moveHistory[i].pla))
         return;
       board.playMoveAssumeLegal(treeHist.moveHistory[i].loc,treeHist.moveHistory[i].pla);
     }
