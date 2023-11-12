@@ -547,14 +547,10 @@ string Location::toStringMach(Loc loc, const Board& b) {
 }
 
 static bool tryParseLetterCoordinate(char c, int& x) {
-  if(c >= 'A' && c <= 'H')
+  if(c >= 'A' && c <= 'Z')
     x = c-'A';
-  else if(c >= 'a' && c <= 'h')
+  else if(c >= 'a' && c <= 'z')
     x = c-'a';
-  else if(c >= 'J' && c <= 'Z')
-    x = c-'A'-1;
-  else if(c >= 'j' && c <= 'z')
-    x = c-'a'-1;
   else
     return false;
   return true;
@@ -581,43 +577,39 @@ bool Location::tryOfString(const string& str, int x_size, int y_size, Loc& resul
     bool sucY = Global::tryStringToInt(pieces[1],y);
     if(!sucX || !sucY)
       return false;
-    if (y % 2 == 0)return false;
-    y = (y-1) / 2;
-    if ((x-y) % 2 == 0)return false;
-    x = (x - y-1) / 2;
+    x--;
+    y--;
     if(x < 0 || y < 0 || x >= x_size || y >= y_size)
       return false;
     result = Location::getLoc(x,y,x_size);
     return true;
   }
   else {
-    int x;
-    if(!tryParseLetterCoordinate(s[0],x))
+    int i=0;
+    int digit;
+    
+    // x-coordinate: Parse alphabet number.
+    int x = 0;
+    while (tryParseLetterCoordinate(s[i], digit)) {
+      x *= 26;
+      x += digit+1;
+      i++;
+    }
+    if (x == 0) {
       return false;
-
-    //Extended format
-    if((s[1] >= 'A' && s[1] <= 'Z') || (s[1] >= 'a' && s[1] <= 'z')) {
-      int x1;
-      if(!tryParseLetterCoordinate(s[1],x1))
+    }
+  
+    // y-coordinate: Parse integer.
+    for (int j=i; j<s.length(); j++) {
+      if (s[j] < '0' || s[j] > '9') {
         return false;
-      x = (x+1) * 25 + x1;
-      s = s.substr(2,s.length()-2);
+      }
     }
-    else {
-      s = s.substr(1,s.length()-1);
-    }
-
-    int y;
-    bool sucY = Global::tryStringToInt(s,y);
-    if(!sucY)
-      return false;
-    y = 2 * y_size + 1 - y;
-
-    if (y % 2 == 0)return false;
-    y = (y-1) / 2;
-    if ((x-y) % 2 == 0)return false;
-    x = (x - y-1) / 2;
-
+    int y = stoi(s.substr(i));
+    
+    // Convert to 0-based coordinates.
+    x--;
+    y--;
     if(x < 0 || y < 0 || x >= x_size || y >= y_size)
       return false;
     result = Location::getLoc(x,y,x_size);
