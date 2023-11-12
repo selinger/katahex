@@ -68,34 +68,49 @@ static int parseSgfCoord(char c) {
   return -1;
 }
 
+static Loc parseSgfLoc(const string& s, int xSize, int ySize) {
+  int i=0;
+
+  // x-coordinate: Parse alphabet number.
+  int x = 0;
+  while ((s[i] >= 'a' && s[i] <= 'z') || (s[i] >= 'A' && s[i] <= 'Z')) {
+    int digit = (int)s[i] & 31;
+    x *= 26;
+    x += digit;
+    i++;
+  }
+  if (x == 0) {
+    propertyFail("Invalid location: " + s);
+  }
+  
+  // y-coordinate: Parse integer.
+  for (int j=i; j<s.length(); j++) {
+    if (s[j] < '0' || s[j] > '9') {
+      propertyFail("Invalid location: " + s);
+    }
+  }
+  int y = stoi(s.substr(i));
+
+  // Convert to 0-based coordinates.
+  x--;
+  y--;
+  
+  if(x < 0 || x >= xSize || y < 0 || y >= ySize)
+    propertyFail("Invalid location: " + s);
+  return Location::getLoc(x,y,xSize);
+}
+
 //MoveNoBSize uses only single bytes
 //If both coords are COORD_MAX, that indicates pass
 static const int COORD_MAX = 128;
 
 static MoveNoBSize parseSgfLocOrPassNoSize(const string& s, Player pla) {
-  if(s.length() == 0)
+  if(s == "pass")
     return MoveNoBSize(COORD_MAX,COORD_MAX,pla);
-  if(s.length() != 2)
-    propertyFail("Invalid location: " + s);
-
-  int x = parseSgfCoord(s[0]);
-  int y = parseSgfCoord(s[1]);
-
-  if(x < 0 || y < 0 || x >= COORD_MAX || y >= COORD_MAX)
-    propertyFail("Invalid location: " + s);
+  Loc loc = parseSgfLoc(s, COORD_MAX, COORD_MAX);
+  int x = Location::getX(loc, COORD_MAX);
+  int y = Location::getY(loc, COORD_MAX);
   return MoveNoBSize(x,y,pla);
-}
-
-static Loc parseSgfLoc(const string& s, int xSize, int ySize) {
-  if(s.length() != 2)
-    propertyFail("Invalid location: " + s);
-
-  int x = parseSgfCoord(s[0]);
-  int y = parseSgfCoord(s[1]);
-
-  if(x < 0 || x >= xSize || y < 0 || y >= ySize)
-    propertyFail("Invalid location: " + s);
-  return Location::getLoc(x,y,xSize);
 }
 
 static void parseSgfLocRectangle(const string& s, int xSize, int ySize, int& x1, int& y1, int& x2, int& y2) {
@@ -123,7 +138,7 @@ static void parseSgfLocRectangle(const string& s, int xSize, int ySize, int& x1,
 }
 
 static Loc parseSgfLocOrPass(const string& s, int xSize, int ySize) {
-  if(s.length() == 0 || (s == "tt" && (xSize <= 19 || ySize <= 19)))
+  if(s == "pass")
     return Board::PASS_LOC;
   return parseSgfLoc(s,xSize,ySize);
 }
@@ -1336,7 +1351,7 @@ Rules CompactSgf::getRulesOrWarn(const Rules& defaultRules, std::function<void(c
   rules.komi = komi;
 
   if(!hasRules()) {
-    f("Sgf has no rules, using default rules: " + rules.toString());
+    // f("Sgf has no rules, using default rules: " + rules.toString());
     return rules;
   }
   try {
