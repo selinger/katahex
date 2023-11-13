@@ -507,10 +507,10 @@ string Location::toStringMach(Loc loc, int x_size)
     return string("pass");
   if(loc == Board::NULL_LOC)
     return string("null");
-  int x = getX(loc, x_size), y = getY(loc, x_size);
-  int x_print = 2 * x + y+1, y_print = 2 * y+1;
+  int x = getX(loc, x_size);
+  int y = getY(loc, x_size);
   char buf[128];
-  sprintf(buf,"(%d,%d)",x_print,y_print);
+  sprintf(buf,"(%d,%d)",x+1,y+1);
   return string(buf);
 }
 
@@ -522,19 +522,16 @@ string Location::toString(Loc loc, int x_size, int y_size)
     return string("pass");
   if(loc == Board::NULL_LOC)
     return string("null");
-  const char* xChar = "ABCDEFGHJKLMNOPQRSTUVWXYZ";
   int x = getX(loc,x_size);
   int y = getY(loc,x_size);
   if(x >= x_size || x < 0 || y < 0 || y >= y_size)
     return toStringMach(loc,x_size);
 
-  int x_print = 2 * x + y+1, y_print = 2 * y+1, y_size_print = y_size * 2 + 1;
-
   char buf[128];
-  if(x_print <= 24)
-    sprintf(buf,"%c%d",xChar[x_print],y_size_print-y_print);
+  if(x < 26)
+    sprintf(buf,"%c%d", 'A'+x, y+1);
   else
-    sprintf(buf,"%c%c%d",xChar[x_print/25-1],xChar[x_print%25],y_size_print-y_print);
+    sprintf(buf,"%c%c%d",'A' + (x/26-1), 'A' + (x%26), y+1);
   return string(buf);
 }
 
