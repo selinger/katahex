@@ -514,43 +514,27 @@ string Location::toStringMach(Loc loc, int x_size)
   return string(buf);
 }
 
-string Location::toString(Loc loc, int x_size, int y_size)
+string Location::toString(Loc loc, int x_size)
 {
-  if(x_size > 25*5||y_size > 25*5)
-    return toStringMach(loc,x_size);
   if(loc == Board::PASS_LOC)
     return string("pass");
   if(loc == Board::NULL_LOC)
     return string("null");
+  
   int x = getX(loc,x_size);
   int y = getY(loc,x_size);
-  if(x >= x_size || x < 0 || y < 0 || y >= y_size)
-    return toStringMach(loc,x_size);
 
-  char buf[128];
-  if(x < 26)
-    sprintf(buf,"%c%d", 'A'+x, y+1);
-  else
-    sprintf(buf,"%c%c%d",'A' + (x/26-1), 'A' + (x%26), y+1);
-  return string(buf);
+  string xs = Global::toAlphabetNumber(x);
+  string ys = Global::intToString(y+1);
+  return xs + ys;
 }
 
 string Location::toString(Loc loc, const Board& b) {
-  return toString(loc,b.x_size,b.y_size);
+  return toString(loc,b.x_size);
 }
 
 string Location::toStringMach(Loc loc, const Board& b) {
   return toStringMach(loc,b.x_size);
-}
-
-static bool tryParseLetterCoordinate(char c, int& x) {
-  if(c >= 'A' && c <= 'Z')
-    x = c-'A';
-  else if(c >= 'a' && c <= 'z')
-    x = c-'a';
-  else
-    return false;
-  return true;
 }
 
 bool Location::tryOfString(const string& str, int x_size, int y_size, Loc& result) {
@@ -582,17 +566,11 @@ bool Location::tryOfString(const string& str, int x_size, int y_size, Loc& resul
     return true;
   }
   else {
-    int i=0;
-    int digit;
+    int i;
     
     // x-coordinate: Parse alphabet number.
-    int x = 0;
-    while (tryParseLetterCoordinate(s[i], digit)) {
-      x *= 26;
-      x += digit+1;
-      i++;
-    }
-    if (x == 0) {
+    int x = Global::parseAlphabetNumber(s, 0, i);
+    if (x == -1) {
       return false;
     }
   
@@ -602,11 +580,8 @@ bool Location::tryOfString(const string& str, int x_size, int y_size, Loc& resul
         return false;
       }
     }
-    int y = stoi(s.substr(i));
+    int y = stoi(s.substr(i)) - 1;
     
-    // Convert to 0-based coordinates.
-    x--;
-    y--;
     if(x < 0 || y < 0 || x >= x_size || y >= y_size)
       return false;
     result = Location::getLoc(x,y,x_size);

@@ -152,6 +152,11 @@ namespace Global
 
   //Display a message and ask the user to press a key to continue
   void pauseForKey();
+
+  //ALPHABET NUMBERS
+  std::string toAlphabetNumber(int x);
+  std::string toAlphabetNumberUC(int x);
+  int parseAlphabetNumber(std::string s, int i, int &j);
 }
 
 struct StringError : public std::exception {

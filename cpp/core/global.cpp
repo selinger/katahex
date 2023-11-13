@@ -661,3 +661,46 @@ void Global::pauseForKey()
   cout << "Press any key to continue..." << endl;
   cin.get();
 }
+
+//ALPHABET NUMBERS------------------------
+
+// Convert the integer to a zero-based alphabet number. 0 = "a", 1 =
+// "b", 26 = "aa", 51 = "az", etc.
+string Global::toAlphabetNumber(int x)
+{
+  if (x < 0) {
+    throw IOError(string("toAlphabetNumber: negative argument"));
+  }
+  string s = "";
+  while (x >= 0) {
+    s.push_back('a' + (x % 26));
+    x = x / 26 - 1;
+  }
+  std::reverse(s.begin(), s.end());
+  return s;
+}
+
+// Like toAlphabetNumber, but return an upper-case alphabet number.
+string Global::toAlphabetNumberUC(int x)
+{
+  string str = Global::toAlphabetNumber(x);
+  std::transform(str.begin(), str.end(), str.begin(), ::toupper);
+  return str;
+}
+
+// Parse an alphabet number. It takes a string and an index. It
+// returns the parsed number and the first index after it. Return -1
+// when there is no valid number. Note: this alphabet number is
+// zero-based, i.e., 'a' = 0, 'b' = 1, 'aa' = 26, etc.
+int Global::parseAlphabetNumber(string s, int i, int &j)
+{
+  int x = 0;
+  while ((s[i] >= 'a' && s[i] <= 'z') || (s[i] >= 'A' && s[i] <= 'Z')) {
+    int digit = (int)s[i] & 31;
+    x *= 26;
+    x += digit;
+    i++;
+  }
+  j = i;
+  return x-1;
+}

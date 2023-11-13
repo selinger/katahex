@@ -69,17 +69,11 @@ static int parseSgfCoord(char c) {
 }
 
 static Loc parseSgfLoc(const string& s, int xSize, int ySize) {
-  int i=0;
+  int i;
 
   // x-coordinate: Parse alphabet number.
-  int x = 0;
-  while ((s[i] >= 'a' && s[i] <= 'z') || (s[i] >= 'A' && s[i] <= 'Z')) {
-    int digit = (int)s[i] & 31;
-    x *= 26;
-    x += digit;
-    i++;
-  }
-  if (x == 0) {
+  int x = Global::parseAlphabetNumber(s, 0, i);
+  if (x == -1) {
     propertyFail("Invalid location: " + s);
   }
   
@@ -89,11 +83,7 @@ static Loc parseSgfLoc(const string& s, int xSize, int ySize) {
       propertyFail("Invalid location: " + s);
     }
   }
-  int y = stoi(s.substr(i));
-
-  // Convert to 0-based coordinates.
-  x--;
-  y--;
+  int y = stoi(s.substr(i)) - 1;
   
   if(x < 0 || x >= xSize || y < 0 || y >= ySize)
     propertyFail("Invalid location: " + s);
@@ -113,6 +103,7 @@ static MoveNoBSize parseSgfLocOrPassNoSize(const string& s, Player pla) {
   return MoveNoBSize(x,y,pla);
 }
 
+// Fixme: this uses outdated coordinate syntax.
 static void parseSgfLocRectangle(const string& s, int xSize, int ySize, int& x1, int& y1, int& x2, int& y2) {
   if(contains(s,':')) {
     if(s.length() != 5 || s[2] != ':')
@@ -153,13 +144,8 @@ static void writeSgfLoc(ostream& out, Loc loc, int xSize, int ySize) {
   }
   int x = Location::getX(loc,xSize);
   int y = Location::getY(loc,xSize);
-  const char* chars = "abcdefghijklmnopqrstuvwxyz";
-  if (x < 26) {
-    out << chars[x];
-  } else {
-    out << chars[x / 26 - 1] << chars[x % 26];
-  }
-  out << y+1;
+  string s = Global::toAlphabetNumber(x);
+  out << s << y+1;
 }
 
 bool SgfNode::hasProperty(const char* key) const {
@@ -698,7 +684,7 @@ void Sgf::iterAllUniquePositionsHelper(
 
         throw StringError(
           "Illegal move in " + fileName + " effective turn " + Global::int64ToString(j+initialTurnNumber) + " move " +
-          Location::toString(buf[j].loc, board.x_size, board.y_size) + " SGF trace (branches 0-indexed): " + trace.str()
+          Location::toString(buf[j].loc, board) + " SGF trace (branches 0-indexed): " + trace.str()
         );
       }
       if(hist.moveHistory.size() > 0x3FFFFFFF)
@@ -1418,7 +1404,7 @@ void CompactSgf::playMovesTolerant(Board& board, Player& nextPla, BoardHistory& 
   for(int64_t i = 0; i<turnIdx; i++) {
     bool suc = hist.makeBoardMoveTolerant(board,moves[i].loc,moves[i].pla);
     if(!suc)
-      throw StringError("Illegal move in " + fileName + " turn " + Global::int64ToString(i) + " move " + Location::toString(moves[i].loc, board.x_size, board.y_size));
+      throw StringError("Illegal move in " + fileName + " turn " + Global::int64ToString(i) + " move " + Location::toString(moves[i].loc, board));
     nextPla = getOpp(moves[i].pla);
   }
 }
