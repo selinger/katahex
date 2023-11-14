@@ -77,6 +77,7 @@ static const vector<string> knownCommands = {
   // "analyze",
   "lz-analyze",
   "kata-analyze",
+  "gogui-gfx-analyze",
 
   //Display raw neural net evaluations
   "kata-raw-nn",
@@ -520,6 +521,7 @@ struct GTPEngine {
     bool analyzing = false;
     bool lz = false;
     bool kata = false;
+    bool gogui_gfx = false;
     int minMoves = 0;
     int maxMoves = 10000000;
     bool showOwnership = false;
@@ -585,7 +587,7 @@ struct GTPEngine {
         cout << endl;
       };
     }
-    //kata-analyze, analyze (sabaki)
+    //kata-analyze, analyze (sabaki), gogui-gfx-analyze
     else {
       callback = [args,pla,this](const Search* search) {
         vector<AnalysisData> buf;
@@ -611,6 +613,13 @@ struct GTPEngine {
         }
 
         ostringstream out;
+
+        // For HexGui: use gogui-gfx for interactive display ("pondering").
+        if (args.gogui_gfx) {
+          out << "gogui-gfx:" << endl;
+          out << "kata" << endl;
+        }
+
         if(!args.kata) {
           //Hack for sabaki - ensure always showing decimal point. Also causes output to be more verbose with trailing zeros,
           //unfortunately, despite doing not improving the precision of the values.
@@ -691,6 +700,9 @@ struct GTPEngine {
         }
 
         cout << out.str() << endl;
+        if (args.gogui_gfx) {
+          cout << endl;
+        }
       };
     }
     return callback;
@@ -1002,7 +1014,8 @@ static GTPEngine::AnalyzeArgs parseAnalyzeCommand(
   int numArgsParsed = 0;
 
   bool isLZ = (command == "lz-analyze" || command == "lz-genmove_analyze");
-  bool isKata = (command == "kata-analyze" || command == "kata-genmove_analyze");
+  bool isKata = (command == "kata-analyze" || command == "kata-genmove_analyze" || command == "gogui-gfx-analyze");
+  bool useGoguiGfx = (command == "gogui-gfx-analyze");
   double lzAnalyzeInterval = TimeControls::UNLIMITED_TIME_DEFAULT;
   int minMoves = 0;
   int maxMoves = 10000000;
@@ -1034,6 +1047,11 @@ static GTPEngine::AnalyzeArgs parseAnalyzeCommand(
   if(pieces.size() > numArgsParsed && PlayerIO::tryParsePlayer(pieces[numArgsParsed],pla))
     numArgsParsed += 1;
 
+  if (command == "gogui-gfx-analyze") {
+    // Set the interval to a default. In centiseconds (0.01 second).
+    lzAnalyzeInterval = 50;
+  }
+  
   //Parse optional interval float
   if(pieces.size() > numArgsParsed &&
      Global::tryStringToDouble(pieces[numArgsParsed],lzAnalyzeInterval) &&
@@ -1145,6 +1163,7 @@ static GTPEngine::AnalyzeArgs parseAnalyzeCommand(
   args.analyzing = true;
   args.lz = isLZ;
   args.kata = isKata;
+  args.gogui_gfx = useGoguiGfx;
   //Convert from centiseconds to seconds
   args.secondsPerReport = lzAnalyzeInterval * 0.01;
   args.minMoves = minMoves;
@@ -1329,6 +1348,7 @@ int MainCmds::gtp(const vector<string>& args) {
   }
 
   bool currentlyAnalyzing = false;
+  bool useGoguiGfx = false;
   string line;
   while(getline(cin,line)) {
     //Parse command, extracting out the command itself, the arguments, and any GTP id number for the command.
@@ -1362,6 +1382,12 @@ int MainCmds::gtp(const vector<string>& args) {
       if(currentlyAnalyzing) {
         currentlyAnalyzing = false;
         engine->stopAndWait();
+        if (useGoguiGfx) {
+          if(hasId)
+            cout << "=" << Global::intToString(id) << endl;
+          else
+            cout << "=" << endl;
+        }
         cout << endl;
       }
 
@@ -2079,7 +2105,7 @@ int MainCmds::gtp(const vector<string>& args) {
           cout << "=" << Global::intToString(id) << endl;
         else
           cout << "=" << endl;
-
+        
         engine->genMove(
           pla,
           logger,searchFactorWhenWinningThreshold,searchFactorWhenWinning,
@@ -2089,6 +2115,7 @@ int MainCmds::gtp(const vector<string>& args) {
           response,responseIsError,maybeStartPondering,
           analyzeArgs
         );
+
         //And manually handle the result as well. In case of error, don't report any play.
         suppressResponse = true;
         if(!responseIsError) {
@@ -2252,9 +2279,10 @@ int MainCmds::gtp(const vector<string>& args) {
       }
     }
 
-    else if(command == "analyze" || command == "lz-analyze" || command == "kata-analyze") {
+    else if(command == "analyze" || command == "lz-analyze" || command == "kata-analyze" || command == "gogui-gfx-analyze") {
       Player pla = engine->bot->getRootPla();
       bool parseFailed = false;
+      useGoguiGfx = (command == "gogui-gfx-analyze");
       GTPEngine::AnalyzeArgs analyzeArgs = parseAnalyzeCommand(command, pieces, pla, parseFailed, engine);
 
       if(parseFailed) {
@@ -2262,12 +2290,14 @@ int MainCmds::gtp(const vector<string>& args) {
         response = "Could not parse analyze arguments or arguments out of range: '" + Global::concat(pieces," ") + "'";
       }
       else {
-        //Make sure the "equals" for GTP is printed out prior to the first analyze line, regardless of thread racing
-        if(hasId)
-          cout << "=" << Global::intToString(id) << endl;
-        else
-          cout << "=" << endl;
-
+        if (!useGoguiGfx) {
+          //Make sure the "equals" for GTP is printed out prior to the first analyze line, regardless of thread racing
+          if(hasId)
+            cout << "=" << Global::intToString(id) << endl;
+          else
+            cout << "=" << endl;
+        }
+        
         engine->analyze(pla, analyzeArgs);
 
         //No response - currentlyAnalyzing will make sure we get a newline at the appropriate time, when stopped.
