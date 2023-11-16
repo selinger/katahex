@@ -523,8 +523,8 @@ void NNEvaluator::serve(
             buf.resultBufs[row]->symmetry = defaultSymmetry;
           }
         }
-        if (isWhite)buf.resultBufs[row]->symmetry |= 4;//°×Æå·­×ª
-        else buf.resultBufs[row]->symmetry &= 3;//ºÚÆå²»·­×ª
+        if (isWhite)buf.resultBufs[row]->symmetry |= 4;//ç™½æ£‹ç¿»è½¬
+        else buf.resultBufs[row]->symmetry &= 3;//é»‘æ£‹ä¸ç¿»è½¬
       }
 
       NeuralNet::getOutput(gpuHandle, buf.inputBuffers, numRows, buf.resultBufs, outputBuf);

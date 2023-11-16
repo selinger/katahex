@@ -8,7 +8,7 @@
 
 struct Rules {
 
-  //taxRule不删只是为了给之后新增规则留下个模板
+  //taxRule涓嶅垹鍙槸涓轰簡缁欎箣鍚庢柊澧炶鍒欑暀涓嬩釜妯℃澘
   static const int TAX_NONE = 0;
   static const int TAX_SEKI = 1;
   static const int TAX_ALL = 2;

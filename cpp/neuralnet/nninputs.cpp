@@ -607,7 +607,7 @@ void NNInputs::fillRowV7(
   //Global features.
   
   //The first one determines the symmetry
-  //°×Æåxy×ªÖÃ£¬ºÚÆå²»×ªÖÃ
+  //ç™½æ£‹xyè½¬ç½®ï¼Œé»‘æ£‹ä¸è½¬ç½®
   rowGlobal[0] = nextPlayer == C_WHITE ?1.0:0.0;
 
   //Komi and any score adjustments

@@ -39,7 +39,7 @@ struct BoardHistory {
   //Score difference of the game if the game is supposed to have ended now, does NOT take into account whiteKomiAdjustmentForDrawUtility
   //Always an integer or half-integer.
 
-  //不删，以后可能用
+  //涓嶅垹锛屼互鍚庡彲鑳界敤
   float finalWhiteMinusBlackScore;
 
   //True if this game is supposed to be ended with a score

@@ -1328,7 +1328,7 @@ FinishedGameData* Play::runGame(
   };
 
 
-  if (ANTI_HEX) //随机撒几个子
+  if (ANTI_HEX) //闅忔満鎾掑嚑涓瓙
   {
     int maxRandomMove = std::min(board.x_size, board.y_size) - 1;
     int randomOpeningMovenum = gameRand.nextUInt(2*maxRandomMove+1);
@@ -1346,7 +1346,7 @@ FinishedGameData* Play::runGame(
     }
 
   }
-  else //if HEX  平衡点概率大
+  else //if HEX  骞宠　鐐规鐜囧ぇ
   {
     double makeOpeningFairRate = playSettings.forSelfPlay ? 0.98: 1.0;
 

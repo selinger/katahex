@@ -437,7 +437,7 @@ void TrainingWriteBuffers::addRow(
   }
   if (nextPlayer == C_WHITE)
   {
-    //注意，policy的size是H*W+1，还有pass
+    //娉ㄦ剰锛宲olicy鐨剆ize鏄疕*W+1锛岃繕鏈塸ass
     selfTransposeNCHW(rowPolicy, 1, 1, dataYLen, dataXLen);
     selfTransposeNCHW(rowPolicy + 1 * policySize, 1, 1, dataYLen, dataXLen);
   }
