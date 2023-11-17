@@ -34,7 +34,7 @@ set(USE_TCMALLOC 0 CACHE BOOL "Use TCMalloc")
 set(NO_GIT_REVISION 0 CACHE BOOL "Disable embedding the git revision into the compiled exe")
 set(USE_AVX2 0 CACHE BOOL "Compile with AVX2")
 set(USE_BIGGER_BOARDS_EXPENSIVE 0 CACHE BOOL "Allow boards up to size 29. Compiling with this will use more memory and slow down KataHex, even when playing on boards of size 19.")
-set(MAX_BOARD_LEN CACHE STRING "The maximum board size")
+set(MAX_BOARD_LEN "13" CACHE STRING "The maximum board size")
 
 #--------------------------- NEURAL NET BACKEND ------------------------------------------------------------------------
 
