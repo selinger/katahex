@@ -1,10 +1,16 @@
 # KataHex   
 
-KataHex is a Hex engine that is based on Katago TensorRT+GraphSearch.
+KataHex is a Hex engine that is based on Katago. See the original [KataGo README](https://github.com/lightvector/KataGo#readme) for a general information on how it works.
 
-Results and conclusions are here: <https://zhuanlan.zhihu.com/p/476464087>
+You can find KataHex in the Hex2022 branch of this repository. It was
+created by HZY (<2658628026@qq.com>). Peter Selinger
+(<selinger@mathstat.dal.ca>) has made further modifications to make
+KataHex more compatible with HexGUI.
 
-You can find KataHex in the Hex2022 branch of this repository.
+## Results and conclusions
+
+Some results and conclusions about opening move win rates are here:
+<https://zhuanlan.zhihu.com/p/476464087>
 
 ## Building
 
