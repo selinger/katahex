@@ -57,3 +57,20 @@ In this mode, KataHex speaks the [GTP
 protocol](https://www.hexwiki.net/index.php/GTP). It's possible to
 interact with it directly, although you may prefer to use a graphical
 user interface such as [HexGUI](https://github.com/selinger/hexgui).
+
+## Integration with HexGUI
+
+For integration with [HexGUI](https://github.com/selinger/hexgui) or
+other graphical frontends, it is most convenient to modify
+katahex-launcher.sh with the correct paths to katahex, the
+configuration file, and the model.  Then under HexGUI → Program →
+New Program, add "KataHex" as the name and the path to
+katahex-launcher.sh as the command.
+
+After connecting KataHex to HexGUI, you can access KataHex analysis by
+using the calculator icon on the main menu bar or pressing "s" (for
+"solve").
+
+
+
+
