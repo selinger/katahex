@@ -1384,9 +1384,9 @@ int MainCmds::gtp(const vector<string>& args) {
         engine->stopAndWait();
         if (useGoguiGfx) {
           if(hasId)
-            cout << "=" << Global::intToString(id) << endl;
+            cout << "= Interrupted" << Global::intToString(id) << endl;
           else
-            cout << "=" << endl;
+            cout << "= Interrupted" << endl;
         }
         cout << endl;
       }
