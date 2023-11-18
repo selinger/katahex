@@ -71,6 +71,6 @@ After connecting KataHex to HexGUI, you can access KataHex analysis by
 using the calculator icon on the main menu bar or pressing "s" (for
 "solve").
 
-
-
-
+Note that KataHex is often very slow; making a single move seems to
+take several seconds. If the UI seems to be stuck for a long time,
+just wait.
