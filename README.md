@@ -1,4 +1,4 @@
-# KataHex   
+# KataHex
 
 KataHex is a Hex engine that is based on Katago. See the original [KataGo README](https://github.com/lightvector/KataGo#readme) for a general information on how it works.
 
@@ -32,6 +32,8 @@ backends below: `-DUSE_BACKEND=CUDA`, `-DUSE_BACKEND=TENSORRT`, or
 By default, the maximum board size is 13x13. To specify a larger
 maximum board size, add something like `-DMAX_BOARD_LEN=19` to the cmake
 call.
+
+For Windows, pre-built KataHex executables are available on the Releases page.
 
 ## Running
 

@@ -1,0 +1,68 @@
+name: Make a release with pre-built executables
+on:
+  push:
+    tags:
+      - '*'
+  # Can also be triggered manually: gh workflow run release.yml --ref Hex2022
+  workflow_dispatch:
+jobs:
+  build-windows-x64:
+    name: Build / Windows x86-64
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: vcpkg cache
+        uses: actions/cache@v4
+        with:
+          path: '~\AppData\Local\vcpkg\archives'
+          key: windows-vcpkg-${{ github.run_id }}
+          restore-keys: |
+            windows-vcpkg-
+      - name: Install dependencies using vcpkg
+        run: |
+          vcpkg install zlib:x64-windows-mixed eigen3:x64-windows-mixed opencl:x64-windows-mixed `
+            --overlay-triplets=ci-files\vcpkg-triplets
+      - name: Build the cmake project (Eigen, 19x19)
+        uses: threeal/cmake-action@main
+        with:
+          source-dir: cpp
+          options: |
+            CMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake
+            VCPKG_TARGET_TRIPLET=x64-windows-mixed
+            VCPKG_OVERLAY_TRIPLETS=..\ci-files\vcpkg-triplets
+            CMAKE_BUILD_TYPE=Release
+            ZLIB_USE_STATIC_LIBS=TRUE
+            MAX_BOARD_LEN=19
+            USE_BACKEND=EIGEN
+          build-args: --config Release
+      - run: cp cpp/build/Release/katahex.exe katahex-win64-19-eigen.exe && rm cpp/build -r -fo
+      - name: Build the cmake project (OpenCL, 19x19)
+        uses: threeal/cmake-action@main
+        with:
+          source-dir: cpp
+          options: |
+            CMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake
+            VCPKG_TARGET_TRIPLET=x64-windows-mixed
+            VCPKG_OVERLAY_TRIPLETS=..\ci-files\vcpkg-triplets
+            CMAKE_BUILD_TYPE=Release
+            ZLIB_USE_STATIC_LIBS=TRUE
+            MAX_BOARD_LEN=19
+            USE_BACKEND=OPENCL
+          build-args: --config Release
+      - run: cp cpp/build/Release/katahex.exe katahex-win64-19-opencl.exe && rm cpp/build -r -fo
+      - name: Print checksums
+        run: Get-FileHash -Path .\*.exe -Algorithm SHA256 | Format-List
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: Pre-built KataHex
+          body: |
+            Pre-built binaries for Windows.
+            The opencl one runs on GPU and requires opencl.dll to be installed
+            on the system. This file is usually included with the GPU drivers.
+            The eigen one runs on CPU (built without AVX2 support).
+            The maximum board size is 19x19.
+          files: |
+            katahex-win64-19-eigen.exe
+            katahex-win64-19-opencl.exe
