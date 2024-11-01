@@ -35,7 +35,7 @@ jobs:
             MAX_BOARD_LEN=19
             USE_BACKEND=EIGEN
           build-args: --config Release
-      - run: cp cpp/build/Release/katago.exe katago-win64-19-eigen.exe && rm cpp/build -r -fo
+      - run: cp cpp/build/Release/katahex.exe katahex-win64-19-eigen.exe && rm cpp/build -r -fo
       - name: Build the cmake project (OpenCL, 19x19)
         uses: threeal/cmake-action@main
         with:
@@ -49,14 +49,14 @@ jobs:
             MAX_BOARD_LEN=19
             USE_BACKEND=OPENCL
           build-args: --config Release
-      - run: cp cpp/build/Release/katago.exe katago-win64-19-opencl.exe && rm cpp/build -r -fo
+      - run: cp cpp/build/Release/katahex.exe katahex-win64-19-opencl.exe && rm cpp/build -r -fo
       - name: Print checksums
         run: Get-FileHash -Path .\*.exe -Algorithm SHA256 | Format-List
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          name: Pre-built KataGo
+          name: Pre-built KataHex
           body: |
             Pre-built binaries for Windows.
             The opencl one runs on GPU and requires opencl.dll to be installed
@@ -64,5 +64,5 @@ jobs:
             The eigen one runs on CPU (built without AVX2 support).
             The maximum board size is 19x19.
           files: |
-            katago-win64-19-eigen.exe
-            katago-win64-19-opencl.exe
+            katahex-win64-19-eigen.exe
+            katahex-win64-19-opencl.exe
