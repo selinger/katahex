@@ -428,34 +428,24 @@ string Location::toStringMach(Loc loc, int x_size)
     return string("null");
 
   int x = getX(loc, x_size), y = getY(loc, x_size);
-  int x_print = 2 * x + y + 1, y_print = 2 * y + 1;
 
   char buf[128];
-  sprintf(buf, "(%d,%d)", x_print, y_print);
+  sprintf(buf, "(%d,%d)", x+1, y+1);
   return string(buf);
 }
 
 string Location::toString(Loc loc, int x_size, int y_size)
 {
-  if(x_size > 25 * 5 || y_size > 25 * 5)
-    return toStringMach(loc,x_size);
   if(loc == Board::PASS_LOC)
     return string("pass");
   if(loc == Board::NULL_LOC)
     return string("null");
-  const char* xChar = "ABCDEFGHJKLMNOPQRSTUVWXYZ";
+
   int x = getX(loc,x_size);
   int y = getY(loc,x_size);
-  if(x >= x_size || x < 0 || y < 0 || y >= y_size)
-    return toStringMach(loc,x_size);
-  int x_print = 2 * x + y + 1, y_print = 2 * y + 1, y_size_print = y_size * 2 + 1;
-
-  char buf[128];
-  if(x_print <= 24)
-    sprintf(buf, "%c%d", xChar[x_print], y_size_print - y_print);
-  else
-    sprintf(buf, "%c%c%d", xChar[x_print / 25 - 1], xChar[x_print % 25], y_size_print - y_print);
-  return string(buf);
+  string xs = Global::toAlphabetNumber(x);
+  string ys = Global::intToString(y+1);
+  return xs + ys;
 }
 
 string Location::toString(Loc loc, const Board& b) {
@@ -464,20 +454,6 @@ string Location::toString(Loc loc, const Board& b) {
 
 string Location::toStringMach(Loc loc, const Board& b) {
   return toStringMach(loc,b.x_size);
-}
-
-static bool tryParseLetterCoordinate(char c, int& x) {
-  if(c >= 'A' && c <= 'H')
-    x = c-'A';
-  else if(c >= 'a' && c <= 'h')
-    x = c-'a';
-  else if(c >= 'J' && c <= 'Z')
-    x = c-'A'-1;
-  else if(c >= 'j' && c <= 'z')
-    x = c-'a'-1;
-  else
-    return false;
-  return true;
 }
 
 bool Location::tryOfString(const string& str, int x_size, int y_size, Loc& result) {
@@ -501,45 +477,31 @@ bool Location::tryOfString(const string& str, int x_size, int y_size, Loc& resul
     bool sucY = Global::tryStringToInt(pieces[1],y);
     if(!sucX || !sucY)
       return false;
-    if(y % 2 == 0)
-      return false;
-    y = (y - 1) / 2;
-    if((x - y) % 2 == 0)
-      return false;
-    x = (x - y - 1) / 2;
+    x--;
+    y--;
     if(x < 0 || y < 0 || x >= x_size || y >= y_size)
       return false;
     result = Location::getLoc(x,y,x_size);
     return true;
   }
   else {
-    int x;
-    if(!tryParseLetterCoordinate(s[0],x))
+    int i;
+    
+    // x-coordinate: Parse alphabet number.
+    int x = Global::parseAlphabetNumber(s, 0, i);
+    if (x == -1) {
       return false;
+    }
 
-    //Extended format
-    if((s[1] >= 'A' && s[1] <= 'Z') || (s[1] >= 'a' && s[1] <= 'z')) {
-      int x1;
-      if(!tryParseLetterCoordinate(s[1],x1))
+    // y-coordinate: Parse integer.
+    for (int j=i; j<s.length(); j++) {
+      if (s[j] < '0' || s[j] > '9') {
         return false;
-      x = (x+1) * 25 + x1;
-      s = s.substr(2,s.length()-2);
-    }
-    else {
-      s = s.substr(1,s.length()-1);
+      }
     }
 
-    int y;
-    bool sucY = Global::tryStringToInt(s,y);
-    if(!sucY)
-      return false;
-    y = y_size * 2 + 1 - y;
-    if(y % 2 == 0)
-      return false;
-    y = (y - 1) / 2;
-    if((x - y) % 2 == 0)
-      return false;
-    x = (x - y - 1) / 2;
+    int y = stoi(s.substr(i)) - 1;
+    
     if(x < 0 || y < 0 || x >= x_size || y >= y_size)
       return false;
     result = Location::getLoc(x,y,x_size);
@@ -602,17 +564,17 @@ void Board::printBoard(ostream& out, const Board& board, Loc markLoc, const vect
   if(hist != NULL)
     out << "MoveNum: " << hist->size() << " ";
   out << "HASH: " << board.pos_hash << "\n";
-  bool showCoords = board.x_size <= 50 && board.y_size <= 50;
+  bool showCoords = true;
   if(showCoords) {
-    const char* xChar = "ABCDEFGHJKLMNOPQRSTUVWXYZ";
+    const char* xChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     out << "  ";
     for(int x = 0; x < board.x_size; x++) {
-      if(x <= 24) {
-        out << " ";
+      if(x < 26) {
         out << xChar[x];
+        out << " ";
       }
       else {
-        out << "A" << xChar[x-25];
+        out << xChar[x / 26 - 1] << xChar[x % 26];
       }
     }
     out << "\n";
@@ -620,9 +582,12 @@ void Board::printBoard(ostream& out, const Board& board, Loc markLoc, const vect
 
   for(int y = 0; y < board.y_size; y++)
   {
+    for (int i=0; i<y; i++) {
+      out << ' ';
+    }
     if(showCoords) {
       char buf[16];
-      sprintf(buf,"%2d",board.y_size-y);
+      sprintf(buf,"%2d",y+1);
       out << buf << ' ';
     }
     for(int x = 0; x < board.x_size; x++)

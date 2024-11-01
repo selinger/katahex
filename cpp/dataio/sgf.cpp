@@ -68,36 +68,42 @@ static int parseSgfCoord(char c) {
   return -1;
 }
 
-//MoveNoBSize uses only single bytes
-//If both coords are COORD_MAX, that indicates pass
-static const int COORD_MAX = 128;
-
-static MoveNoBSize parseSgfLocOrPassNoSize(const string& s, Player pla) {
-  if(s.length() == 0)
-    return MoveNoBSize(COORD_MAX,COORD_MAX,pla);
-  if(s.length() != 2)
-    propertyFail("Invalid location: " + s);
-
-  int x = parseSgfCoord(s[0]);
-  int y = parseSgfCoord(s[1]);
-
-  if(x < 0 || y < 0 || x >= COORD_MAX || y >= COORD_MAX)
-    propertyFail("Invalid location: " + s);
-  return MoveNoBSize(x,y,pla);
-}
-
 static Loc parseSgfLoc(const string& s, int xSize, int ySize) {
-  if(s.length() != 2)
+  int i;
+
+  // x-coordinate: Parse alphabet number.
+  int x = Global::parseAlphabetNumber(s, 0, i);
+  if (x == -1) {
     propertyFail("Invalid location: " + s);
-
-  int x = parseSgfCoord(s[0]);
-  int y = parseSgfCoord(s[1]);
-
+  }
+  
+  // y-coordinate: Parse integer.
+  for (int j=i; j<s.length(); j++) {
+    if (s[j] < '0' || s[j] > '9') {
+      propertyFail("Invalid location: " + s);
+    }
+  }
+  int y = stoi(s.substr(i)) - 1;
+  
   if(x < 0 || x >= xSize || y < 0 || y >= ySize)
     propertyFail("Invalid location: " + s);
   return Location::getLoc(x,y,xSize);
 }
 
+//MoveNoBSize uses only single bytes
+//If both coords are COORD_MAX, that indicates pass
+static const int COORD_MAX = 128;
+
+static MoveNoBSize parseSgfLocOrPassNoSize(const string& s, Player pla) {
+  if(Global::isEqualCaseInsensitive(s,string("pass")))
+    return MoveNoBSize(COORD_MAX,COORD_MAX,pla);
+  Loc loc = parseSgfLoc(s, COORD_MAX, COORD_MAX);
+  int x = Location::getX(loc, COORD_MAX);
+  int y = Location::getY(loc, COORD_MAX);
+  return MoveNoBSize(x,y,pla);
+}
+
+// Fixme: this uses outdated coordinate syntax.
 static void parseSgfLocRectangle(const string& s, int xSize, int ySize, int& x1, int& y1, int& x2, int& y2) {
   if(contains(s,':')) {
     if(s.length() != 5 || s[2] != ':')
@@ -123,21 +129,23 @@ static void parseSgfLocRectangle(const string& s, int xSize, int ySize, int& x1,
 }
 
 static Loc parseSgfLocOrPass(const string& s, int xSize, int ySize) {
-  if(s.length() == 0 || (s == "tt" && (xSize <= 19 || ySize <= 19)))
+  if(Global::isEqualCaseInsensitive(s,string("pass")))
     return Board::PASS_LOC;
   return parseSgfLoc(s,xSize,ySize);
 }
 
 static void writeSgfLoc(ostream& out, Loc loc, int xSize, int ySize) {
-  if(xSize >= 53 || ySize >= 53)
-    throw StringError("Writing coordinates for SGF files for board sizes >= 53 is not implemented");
-  if(loc == Board::PASS_LOC || loc == Board::NULL_LOC)
+  if(loc == Board::PASS_LOC) {
+    out << "pass";
     return;
+  }
+  if(loc == Board::NULL_LOC) {
+    return;
+  }
   int x = Location::getX(loc,xSize);
   int y = Location::getY(loc,xSize);
-  const char* chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  out << chars[x];
-  out << chars[y];
+  string s = Global::toAlphabetNumber(x);
+  out << s << y+1;
 }
 
 bool SgfNode::hasProperty(const char* key) const {
@@ -1445,7 +1453,7 @@ void WriteSgf::writeSgf(
 
   int xSize = initialBoard.x_size;
   int ySize = initialBoard.y_size;
-  out << "(;FF[4]GM[1]";
+  out << "(;FF[4]GM[11]";
   if(xSize == ySize)
     out << "SZ[" << xSize << "]";
   else

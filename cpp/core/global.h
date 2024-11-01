@@ -160,6 +160,10 @@ namespace Global
   //Round x to this many decimal digits of precision
   double roundDynamic(double x, int precision);
 
+  //ALPHABET NUMBERS
+  std::string toAlphabetNumber(int x);
+  std::string toAlphabetNumberUC(int x);
+  int parseAlphabetNumber(std::string s, int i, int &j);
 }
 
 struct StringError : public std::exception {
