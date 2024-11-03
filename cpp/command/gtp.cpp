@@ -1430,6 +1430,7 @@ int MainCmds::gtp(const vector<string>& args) {
       }
       else {
         engine->setOrResetBoardSize(cfg,logger,seedRand,newXSize,newYSize,logger.isLoggingToStderr());
+        engine->clearBoard();
       }
     }
 
