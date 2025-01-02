@@ -19,6 +19,8 @@ If you do have a GPU, you can use another one of the other GPU
 backends below: `-DUSE_BACKEND=CUDA`, `-DUSE_BACKEND=TENSORRT`, or
 `-DUSE_BACKEND=OPENCL`.
 
+    git clone https://github.com/selinger/katahex.git
+    cd katahex
     mkdir build
     cd build
     cmake -DUSE_BACKEND=EIGEN ../cpp
