@@ -45,8 +45,6 @@ You can find a pre-trained neural network model here:
 
 [hex27x3.bin.gz](https://drive.usercontent.google.com/download?id=1YeqRvAYs7YjtPh0xBbDnHxeo2xrLEOdX)
 
-This neural network can play 19x19 or smaller.
-
 You can run KataHex like this, except using the path to your own
 config file and model:
 
